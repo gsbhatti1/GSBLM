@@ -93,32 +93,41 @@ function toggleFocusMode() {
 }
 
 function buildChecklist() {
+  const root = getScanRoot();
   const items = [];
-  const requiredFields = getRequiredFields();
+  const requiredFields = getRequiredFields(root);
+  const primaryActions = getPrimaryActions(root);
+  const headings = getUsefulHeadings(root);
+  const pageTitle = getPageTitle(root);
 
   if (requiredFields.length > 0) {
     requiredFields.slice(0, 6).forEach((label) => {
       items.push(`Fill required field: ${label}`);
     });
+
+    if (primaryActions.length > 0) {
+      items.push(`When ready, look for: ${primaryActions[0]}`);
+    }
+  } else {
+    if (pageTitle) {
+      items.push(`Read the page title: ${pageTitle}`);
+    }
+
+    const intro = getFirstUsefulParagraph(root);
+    if (intro) {
+      items.push('Read the short intro under the title.');
+    }
+
+    headings.slice(0, 6).forEach((heading) => {
+      if (!sameText(heading, pageTitle)) {
+        items.push(`Review section: ${heading}`);
+      }
+    });
+
+    if (primaryActions.length > 0) {
+      items.push(`Look for action: ${primaryActions[0]}`);
+    }
   }
-
-  const headings = Array.from(document.querySelectorAll('h1, h2, h3'))
-    .map((el) => cleanText(el.textContent))
-    .filter(Boolean)
-    .slice(0, 5);
-
-  headings.forEach((heading) => {
-    items.push(`Review section: ${heading}`);
-  });
-
-  const primaryButtons = Array.from(document.querySelectorAll('button, input[type="submit"], a'))
-    .map((el) => cleanText(el.innerText || el.value || el.getAttribute('aria-label') || el.textContent))
-    .filter((text) => isActionText(text))
-    .slice(0, 5);
-
-  primaryButtons.forEach((text) => {
-    items.push(`Look for action: ${text}`);
-  });
 
   const unique = Array.from(new Set(items)).slice(0, 10);
 
@@ -133,31 +142,222 @@ function buildChecklist() {
   return unique;
 }
 
-function getRequiredFields() {
-  const fields = Array.from(document.querySelectorAll('input, select, textarea'));
+function getScanRoot() {
+  const candidates = Array.from(document.querySelectorAll([
+    'form',
+    'main',
+    'article',
+    '[role="main"]',
+    '.entry-content',
+    '.post-content',
+    '.article-content',
+    '.content',
+    '#content',
+  ].join(','))).filter((el) => isUsableElement(el) && !isIgnoredElement(el));
 
-  return fields
-    .filter((field) => field.required || field.getAttribute('aria-required') === 'true')
+  if (candidates.length === 0) return document.body;
+
+  return candidates
+    .map((el) => ({ element: el, score: scoreScanRoot(el) }))
+    .sort((a, b) => b.score - a.score)[0].element;
+}
+
+function scoreScanRoot(el) {
+  const textLength = cleanText(el.innerText || el.textContent).length;
+  const fields = el.querySelectorAll('input, select, textarea').length;
+  const requiredFields = getRequiredFields(el).length;
+  const headings = el.querySelectorAll('h1, h2, h3').length;
+  const isForm = el.matches('form') ? 2000 : 0;
+  const isArticle = el.matches('article, main, [role="main"]') ? 800 : 0;
+
+  return textLength + fields * 120 + requiredFields * 500 + headings * 80 + isForm + isArticle;
+}
+
+function getRequiredFields(root) {
+  return Array.from(root.querySelectorAll('input, select, textarea'))
+    .filter((field) => isRequiredField(field))
     .map((field) => getFieldLabel(field))
-    .filter(Boolean);
+    .filter((label) => label && !isNoiseText(label))
+    .slice(0, 12);
+}
+
+function isRequiredField(field) {
+  if (!isUsableElement(field)) return false;
+  if (isIgnoredElement(field)) return false;
+  if (field.disabled) return false;
+  if (field.type === 'hidden') return false;
+
+  const required = field.required || field.getAttribute('aria-required') === 'true';
+  if (!required) return false;
+
+  const label = getFieldLabel(field);
+  if (isNoiseFieldLabel(label)) return false;
+
+  return true;
 }
 
 function getFieldLabel(field) {
   if (field.id) {
     const label = document.querySelector(`label[for="${CSS.escape(field.id)}"]`);
-    if (label) return cleanText(label.textContent);
+    if (label && isUsableElement(label)) return cleanText(label.textContent).replace(/\*+$/, '');
+  }
+
+  const labelledBy = field.getAttribute('aria-labelledby');
+  if (labelledBy) {
+    const labelText = labelledBy
+      .split(/\s+/)
+      .map((id) => document.getElementById(id)?.textContent || '')
+      .join(' ');
+    if (labelText) return cleanText(labelText).replace(/\*+$/, '');
   }
 
   const wrappedLabel = field.closest('label');
-  if (wrappedLabel) return cleanText(wrappedLabel.textContent);
+  if (wrappedLabel && isUsableElement(wrappedLabel)) {
+    return cleanText(wrappedLabel.textContent).replace(/\*+$/, '');
+  }
 
   return cleanText(
     field.getAttribute('aria-label') ||
     field.getAttribute('placeholder') ||
     field.name ||
     field.id ||
-    'unnamed field'
-  );
+    'field'
+  ).replace(/\*+$/, '');
+}
+
+function getUsefulHeadings(root) {
+  return Array.from(root.querySelectorAll('h1, h2, h3'))
+    .filter((el) => isUsableElement(el) && !isIgnoredElement(el))
+    .map((el) => cleanText(el.textContent))
+    .filter((text) => text && text.length > 8 && !isNoiseText(text))
+    .slice(0, 10);
+}
+
+function getPrimaryActions(root) {
+  return Array.from(root.querySelectorAll('button, input[type="submit"], input[type="button"], a[href]'))
+    .filter((el) => isUsableElement(el) && !isIgnoredElement(el))
+    .map((el) => cleanText(el.innerText || el.value || el.getAttribute('aria-label') || el.textContent))
+    .filter((text) => isActionText(text) && !isNoiseText(text))
+    .slice(0, 8);
+}
+
+function getPageTitle(root) {
+  const titleFromRoot = root.querySelector('h1');
+  const title = titleFromRoot ? cleanText(titleFromRoot.textContent) : cleanText(document.title);
+
+  if (!title || isNoiseText(title)) return '';
+  return title;
+}
+
+function getFirstUsefulParagraph(root) {
+  return Array.from(root.querySelectorAll('p'))
+    .filter((el) => isUsableElement(el) && !isIgnoredElement(el))
+    .map((el) => cleanText(el.textContent))
+    .find((text) => text.length > 40 && !isNoiseText(text));
+}
+
+function isUsableElement(el) {
+  if (!el || !(el instanceof Element)) return false;
+  if (el.id === LIFEMODE_PANEL_ID || el.closest(`#${LIFEMODE_PANEL_ID}`)) return false;
+
+  const style = window.getComputedStyle(el);
+  if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+
+  const rect = el.getBoundingClientRect();
+  if (rect.width < 2 || rect.height < 2) return false;
+
+  return true;
+}
+
+function isIgnoredElement(el) {
+  if (!el || !(el instanceof Element)) return true;
+  if (el.id === LIFEMODE_PANEL_ID || el.closest(`#${LIFEMODE_PANEL_ID}`)) return true;
+
+  const ignoredAncestor = el.closest([
+    'script',
+    'style',
+    'noscript',
+    'template',
+    'header',
+    'footer',
+    'nav',
+    '[role="banner"]',
+    '[role="navigation"]',
+    '[role="contentinfo"]',
+    '[aria-hidden="true"]',
+  ].join(','));
+
+  if (ignoredAncestor) return true;
+
+  const identity = [
+    el.id,
+    el.className,
+    el.getAttribute('role'),
+    el.getAttribute('aria-label'),
+    el.getAttribute('name'),
+  ].join(' ').toLowerCase();
+
+  return isNoiseIdentity(identity);
+}
+
+function isNoiseIdentity(value) {
+  if (!value) return false;
+
+  return [
+    'advert',
+    'advertisement',
+    'sponsor',
+    'newsletter',
+    'subscribe',
+    'cookie',
+    'consent',
+    'gdpr',
+    'privacy-banner',
+    'share',
+    'social',
+    'related-post',
+    'related_content',
+    'promo',
+    'modal',
+    'popup',
+    'overlay',
+    'search',
+  ].some((word) => value.includes(word)) || /(^|[\s_-])ad(s|vert)?($|[\s_-])/.test(value);
+}
+
+function isNoiseFieldLabel(text) {
+  const value = cleanText(text).toLowerCase();
+
+  return [
+    'plays sound',
+    'contains adult content',
+    'covers the page',
+    'report this ad',
+    'why this ad',
+    'other',
+  ].includes(value) || value.includes('report ad');
+}
+
+function isNoiseText(text) {
+  const value = cleanText(text).toLowerCase();
+  if (!value) return true;
+
+  return [
+    'cookie notice',
+    'accept cookies',
+    'cookie settings',
+    'privacy policy',
+    'terms of use',
+    'advertisement',
+    'sponsored',
+    'report ad',
+    'subscribe',
+    'newsletter',
+    'share this',
+    'related stories',
+    'see more',
+    'all bookmarks',
+  ].some((phrase) => value.includes(phrase));
 }
 
 function renderChecklist(items) {
@@ -216,6 +416,10 @@ function cleanText(value) {
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 140);
+}
+
+function sameText(a, b) {
+  return cleanText(a).toLowerCase() === cleanText(b).toLowerCase();
 }
 
 function isActionText(text) {
