@@ -8,7 +8,6 @@
     "default_title": "Open LifeMode",
     "default_popup": "src/popup.html"
   },
-  "options_page": "src/options.html",
   "permissions": [
     "activeTab",
     "storage"
