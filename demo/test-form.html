@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LifeMode Demo Form</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f0e8;
+      color: #17202a;
+      line-height: 1.5;
+    }
+    header {
+      padding: 28px;
+      background: #102a43;
+      color: #ffffff;
+    }
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+    section, form {
+      margin: 18px 0;
+      padding: 22px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid #ded8cc;
+    }
+    label {
+      display: block;
+      margin: 16px 0 6px;
+      font-weight: 700;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #aab4c0;
+      border-radius: 10px;
+      font: inherit;
+    }
+    button {
+      margin-top: 18px;
+      padding: 12px 18px;
+      border: 0;
+      border-radius: 12px;
+      background: #102a43;
+      color: #ffffff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .hint {
+      color: #52606d;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>LifeMode Demo: Housing Support Request</h1>
+    <p>Use this page to test Form Rescue, required-field detection, Go buttons, focus mode, read-aloud, and handoff copy.</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>Before you start</h2>
+      <p>This is a demo page. Nothing is submitted. It exists so LifeMode can be tested without using a private real-world form.</p>
+    </section>
+
+    <form>
+      <h2>Request details</h2>
+      <p class="hint">Fields marked required are needed before the request can move forward.</p>
+
+      <label for="fullName">Full name *</label>
+      <input id="fullName" name="fullName" required autocomplete="name">
+
+      <label for="email">Email address *</label>
+      <input id="email" name="email" type="email" required autocomplete="email">
+
+      <label for="phone">Phone number</label>
+      <input id="phone" name="phone" autocomplete="tel">
+
+      <label for="needType">What kind of help do you need? *</label>
+      <select id="needType" name="needType" required>
+        <option value="">Choose one</option>
+        <option>Housing application</option>
+        <option>Document checklist</option>
+        <option>Appointment preparation</option>
+        <option>Benefits paperwork</option>
+      </select>
+
+      <label for="deadline">Is there a deadline?</label>
+      <input id="deadline" name="deadline" type="date">
+
+      <label for="details">What is the next thing you are stuck on? *</label>
+      <textarea id="details" name="details" rows="5" required></textarea>
+
+      <button type="submit">Submit request</button>
+    </form>
+  </main>
+</body>
+</html>
