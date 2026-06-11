@@ -1,0 +1,71 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 320px;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f7f4ee;
+  color: #17202a;
+}
+
+.popup {
+  padding: 18px;
+}
+
+.kicker {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5d6d7e;
+}
+
+h1 {
+  margin: 0 0 10px;
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.copy {
+  margin: 0 0 16px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #34495e;
+}
+
+button {
+  width: 100%;
+  min-height: 46px;
+  margin: 8px 0;
+  border: 0;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#openLifeMode {
+  background: #102a43;
+  color: #ffffff;
+}
+
+.secondary {
+  background: #ffffff;
+  color: #102a43;
+  border: 2px solid #d6d3cb;
+}
+
+button:focus-visible {
+  outline: 4px solid #f6ad55;
+  outline-offset: 2px;
+}
+
+.status {
+  min-height: 18px;
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #52606d;
+}
