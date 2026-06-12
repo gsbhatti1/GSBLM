@@ -55,6 +55,17 @@
 
       <p class="lm-intro">LifeMode Companion turns this page into steps, memory, and human help.</p>
 
+      <section class="lm-privacy-note" aria-label="LifeMode privacy note">
+        <strong>Private demo mode:</strong> basic page scanning, notes, and checklists stay in this browser. No external AI call is made in this prototype.
+      </section>
+
+      <section id="lm-first-run" class="lm-card lm-welcome-card" aria-label="LifeMode welcome">
+        <div class="lm-badge">Welcome</div>
+        <h3>Start with one step</h3>
+        <p>LifeMode is for the moment when the page is too heavy. Use Steps for the next action, Companion for plain guidance, Memory so you do not lose the thread, and Human Help when software is not enough.</p>
+        <button type="button" class="lm-wide-button" data-action="dismiss-welcome">Got it</button>
+      </section>
+
       <div class="lm-tabs" role="tablist" aria-label="LifeMode sections">
         <button type="button" class="lm-tab is-active" data-tab="steps" role="tab" aria-selected="true">Steps</button>
         <button type="button" class="lm-tab" data-tab="companion" role="tab" aria-selected="false">Companion</button>
@@ -110,7 +121,7 @@
         <section class="lm-card lm-companion-response" aria-labelledby="lm-companion-title">
           <h3 id="lm-companion-title">Companion response</h3>
           <div id="lm-companion-output">
-            <p>Press one Companion button. I will keep it short and action-focused.</p>
+            <p>Choose one button. Companion will answer with the simple version, what may be missing, and the next step.</p>
           </div>
         </section>
       </section>
@@ -221,6 +232,7 @@
     panel.querySelector('[data-action="copy"]').addEventListener('click', copyHandoff);
     panel.querySelector('[data-action="copy-memory"]').addEventListener('click', copyHandoff);
     panel.querySelector('[data-action="copy-trusted"]').addEventListener('click', copyTrustedMessage);
+    panel.querySelector('[data-action="dismiss-welcome"]')?.addEventListener('click', dismissWelcomeCard);
     panel.querySelectorAll('[data-local-search]').forEach((button) => {
       button.addEventListener('click', () => openLocalHelpSearch(button.getAttribute('data-local-search')));
     });
@@ -1097,6 +1109,21 @@
     setStatus('Memory note cleared.');
   }
 
+  function prepareWelcomeCard() {
+    chrome.storage.local.get(['lifemode-welcome-seen']).then((result) => {
+      const card = document.getElementById('lm-first-run');
+      if (card && result['lifemode-welcome-seen']) {
+        card.hidden = true;
+      }
+    });
+  }
+
+  function dismissWelcomeCard() {
+    const card = document.getElementById('lm-first-run');
+    if (card) card.hidden = true;
+    chrome.storage.local.set({ 'lifemode-welcome-seen': true });
+    setStatus('Welcome hidden. You can keep working.');
+  }
   function getPanelStateKey() {
     // Store only origin + pathname. Do not store query strings, hashes, page text, or form content.
     return `${PANEL_STATE_PREFIX}${location.origin}${location.pathname}`;
