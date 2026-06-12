@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "GSB LifeMode",
   "short_name": "LifeMode",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Turn confusing pages and forms into a calm checklist and one clear next step.",
   "action": {
     "default_title": "Open LifeMode"

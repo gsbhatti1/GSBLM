@@ -11,6 +11,7 @@
   const TARGET_CLASS = 'gsb-lifemode-target';
   const LINK_TARGET_CLASS = 'gsb-lifemode-link-target';
   const LINK_BADGE_CLASS = 'gsb-lifemode-link-badge';
+  const PANEL_STATE_PREFIX = 'lifemode-panel-open:';
 
   const lifeModeState = {
     items: [],
@@ -989,6 +990,33 @@
     setStatus('Memory note cleared.');
   }
 
+  function getPanelStateKey() {
+    // Store only origin + pathname. Do not store query strings, hashes, page text, or form content.
+    return `${PANEL_STATE_PREFIX}${location.origin}${location.pathname}`;
+  }
+
+  function persistPanelOpen(isOpen) {
+    const key = getPanelStateKey();
+
+    if (isOpen) {
+      chrome.storage.local.set({ [key]: true });
+      return;
+    }
+
+    chrome.storage.local.remove(key);
+  }
+
+  function restorePanelOpenState() {
+    const key = getPanelStateKey();
+
+    chrome.storage.local.get([key]).then((result) => {
+      if (!result[key]) return;
+
+      window.setTimeout(() => {
+        openLifeModePanel();
+      }, 250);
+    });
+  }
   function normalizeText(value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
   }
