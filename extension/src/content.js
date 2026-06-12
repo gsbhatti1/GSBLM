@@ -34,6 +34,7 @@
     const existing = document.getElementById(LIFEMODE_PANEL_ID);
     if (existing) {
       existing.classList.add('is-open');
+      persistPanelOpen(true);
       runScan();
       return;
     }
@@ -199,12 +200,14 @@
     document.documentElement.appendChild(panel);
     bindPanelActions(panel);
     prepareMemoryNote();
+    persistPanelOpen(true);
     runScan();
   }
 
   function bindPanelActions(panel) {
     panel.querySelector('.lm-close').addEventListener('click', () => {
       panel.classList.remove('is-open');
+      persistPanelOpen(false);
     });
 
     panel.querySelectorAll('.lm-tab').forEach((button) => {
@@ -1161,4 +1164,6 @@
   chrome.storage.local.get(['focusMode']).then((settings) => {
     if (settings.focusMode) document.documentElement.classList.add(FOCUS_CLASS);
   });
+
+  restorePanelOpenState();
 })();
