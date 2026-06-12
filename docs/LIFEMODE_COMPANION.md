@@ -1,27 +1,33 @@
 # LifeMode Companion
 
-## Product idea
+LifeMode Companion is the AI support layer for the LifeMode extension.
 
-LifeMode Companion is the guide layer inside the LifeMode panel.
+It is not a chatbot-first product.
+It is not therapy.
+It is not legal advice.
+It is not a VA claims representative.
 
-It is not a generic chatbot. It is a steady task companion that helps a person move through a page, form, application, appointment, or document without losing the thread.
+It is a calm task companion that helps the user move through the process without losing the thread.
 
 ## Core promise
 
-> I am here to help you understand this page, find what is missing, and take one clear next step.
+> LifeMode Companion walks with you through the task you cannot finish alone.
 
-## Main tabs
+## Panel structure
 
-Future LifeMode panel:
+The future LifeMode panel should have four tabs:
 
-```text
-Steps | Companion | Memory | Human Help
-```
+1. Steps
+2. Companion
+3. Memory
+4. Human Help
 
-### Steps
+## Steps tab
 
-- page summary
+The current prototype already begins this:
+
 - page type detection
+- summary
 - next step
 - checklist
 - Go buttons
@@ -29,9 +35,9 @@ Steps | Companion | Memory | Human Help
 - read aloud
 - copy handoff
 
-### Companion
+## Companion tab
 
-The user can ask:
+The user should be able to ask:
 
 - What is this page asking me to do?
 - Am I missing anything?
@@ -43,122 +49,102 @@ The user can ask:
 - What should I bring to my appointment?
 - Can you help me prepare for this form?
 
-### Memory
+The Companion answer should follow this structure:
 
-- saved note for this page
+1. Simple version
+2. What looks complete
+3. What may be missing
+4. Next safest step
+5. What to ask a human helper
+
+## Memory tab
+
+Memory is not a gimmick. It is part of the disability support layer.
+
+Start with:
+
+- note for this page
 - saved next step
-- needed documents
 - deadline
-- trusted helper handoff
-- last place stopped
+- documents needed
+- people to contact
+- handoff to trusted person
 
-### Human Help
+Later:
 
-- crisis support
-- trusted person handoff
+- private life binder
+- saved workflows
+- document checklist vault
+- evidence tracker
+- appointment prep notes
+- trusted helper sharing
+
+## Human Help tab
+
+The Companion should route to humans when needed:
+
+- Veterans Crisis Line
+- 988 Lifeline
 - VSO or accredited representative
 - VA social worker
-- Vet Center
-- Wounded Warrior Project
-- local support resources
-
-## Application Check
-
-The strongest Companion feature is:
-
-> Check what I am missing.
-
-It should review the page and return:
-
-```text
-Status: Not ready / Almost ready / Ready to review
-Missing fields:
-Missing uploads:
-Warnings found:
-Unclear answers:
-Questions to ask a human helper:
-Next step:
-```
+- caregiver or trusted person
+- local resources
+- Wounded Warrior Project or other nonprofit support
 
 ## VA Claim Companion Mode
 
-When LifeMode detects VA claim or benefits pages, it can enter VA Claim Companion Mode.
+When LifeMode detects VA disability pages, claim pages, or benefits forms, it should switch into VA Claim Companion Mode.
 
-Possible support areas:
+Possible features:
 
 - condition list
-- symptom notes
+- symptom impact notes
 - service event notes
-- medical record checklist
-- private record checklist
+- evidence checklist
+- medical records checklist
 - buddy statement outline
 - personal statement draft
 - C&P exam prep
 - VSO handoff
 - deadline memory
 
-## Draft writing support
+## VA Claim safety rules
 
-The Companion can turn rough notes into a plain-language draft.
-
-Example rough note:
-
-```text
-Back hurts since deployment. Sleep bad. Cannot stand long. Miss work sometimes.
-```
-
-Example output:
-
-```text
-Draft description:
-I am describing back pain that began during my military service. The pain affects my daily life by making it difficult to stand for long periods, sleep comfortably, and complete normal work tasks.
-```
-
-Required footer on draft outputs:
-
-> Review this. Only keep what is true. Edit anything that does not sound like you.
-
-## Hard safety boundaries
-
-The Companion must not:
-
-- promise claim outcomes
-- suggest disability ratings
-- tell users what to say to win
-- encourage exaggeration
-- hide facts
-- act as legal representation
-- act as medical diagnosis or treatment
-- act as a licensed social worker
-- replace crisis support or emergency care
-
-The Companion should:
-
-- keep answers short
-- use plain language
-- recommend human help when needed
-- create questions for professionals
-- help the user tell the truth clearly
-- keep the next step visible
-
-## Voice
-
-Good:
-
-- This page is asking for three things.
-- I found one missing field.
-- Here is the next safest step.
-- Ask your VSO this question.
-- Only keep what is true.
-
-Avoid:
+Never say:
 
 - You will win this claim.
-- Say this to get approved.
-- This is medical advice.
-- This is legal advice.
-- You do not need a human helper.
+- Claim this rating.
+- Say this to get 100%.
+- Exaggerate this.
+- Hide this.
 
-## North star
+Always say:
 
-> The Companion does not replace humans. It helps people reach the right human before the process breaks them.
+- Tell the truth clearly.
+- Only submit what is accurate.
+- Do not guess.
+- Ask an accredited representative or VSO if unsure.
+
+## Companion tone
+
+The Companion should sound like a calm, loyal dog at the user's side.
+
+Not loud.
+Not fake cheerful.
+Not corporate.
+Not judgmental.
+
+Use language like:
+
+- Let's take one step.
+- I found the next action.
+- This looks like a form. We can handle it one field at a time.
+- You do not have to finish everything right now.
+- Here is a clean handoff you can send to someone you trust.
+
+## Product moat
+
+The extension is the wedge.
+The Companion is the moat.
+The Memory layer is the return loop.
+The Human Help layer is the mission.
