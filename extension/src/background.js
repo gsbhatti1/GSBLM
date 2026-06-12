@@ -7,7 +7,7 @@ async function openLifeMode(tab) {
     await chrome.tabs.sendMessage(tab.id, { type: 'OPEN_LIFEMODE' });
     return;
   } catch (error) {
-    // Content scripts may not be awake yet. Inject them after the user clicks the icon.
+    // Content script may not be awake yet. Inject it after the user clicks the icon.
   }
 
   try {
@@ -18,7 +18,7 @@ async function openLifeMode(tab) {
 
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ['src/content.js', 'src/content-upgrade.js'],
+      files: ['src/content.js'],
     });
 
     await chrome.tabs.sendMessage(tab.id, { type: 'OPEN_LIFEMODE' });

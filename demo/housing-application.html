@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LifeMode Demo - Housing Application</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #f3f0e8; color: #17202a; line-height: 1.5; }
+    header { padding: 28px; background: #102a43; color: #fff; }
+    main { max-width: 920px; margin: 0 auto; padding: 28px; }
+    form { margin: 18px 0; padding: 22px; border-radius: 18px; background: #fff; border: 1px solid #ded8cc; }
+    label { display: block; margin: 16px 0 6px; font-weight: 700; }
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #aab4c0; border-radius: 10px; font: inherit; }
+    button { margin-top: 18px; padding: 12px 18px; border: 0; border-radius: 12px; background: #102a43; color: #fff; font-weight: 700; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Housing Application Demo</h1>
+    <p>Test Form Rescue for a civilian or Veteran housing workflow.</p>
+  </header>
+  <main>
+    <form>
+      <h2>Applicant information</h2>
+      <label for="name">Full name *</label>
+      <input id="name" name="name" required autocomplete="name">
+      <label for="email">Email *</label>
+      <input id="email" name="email" type="email" required autocomplete="email">
+      <label for="income">Monthly income *</label>
+      <input id="income" name="income" required inputmode="decimal">
+      <label for="moveDate">Desired move-in date</label>
+      <input id="moveDate" name="moveDate" type="date">
+      <label for="notes">What part is hard right now? *</label>
+      <textarea id="notes" name="notes" rows="4" required></textarea>
+      <button type="submit">Submit housing application</button>
+    </form>
+  </main>
+</body>
+</html>
