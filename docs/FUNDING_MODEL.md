@@ -4,7 +4,7 @@ LifeMode must be financially sustainable without betraying the mission.
 
 ## Revenue principle
 
-The person in the hardest moment should not be the person we squeeze.
+The person in the most pain should not be the person we squeeze.
 
 Veterans get LifeMode Veteran free.
 Organizations, sponsors, donors, and civilian paid plans fund the work.
@@ -21,7 +21,7 @@ For Veterans, the following should stay free:
 - read aloud
 - memory note
 - copy handoff
-- human-help routing
+- crisis and human-help routing
 - trusted-person handoff
 - VSO and VA social worker routing
 
