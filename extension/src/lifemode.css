@@ -87,6 +87,26 @@
   margin: 0 0 12px;
 }
 
+
+.lm-privacy-note {
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #c9d7ee;
+  border-radius: 14px;
+  background: #f3f8ff;
+  color: #23374d;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.lm-welcome-card {
+  border-color: #b6d4fe;
+  background: #fbfdff;
+}
+
+.lm-welcome-card[hidden] {
+  display: none !important;
+}
 .lm-tabs {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
