@@ -1,28 +1,34 @@
-chrome.action.onClicked.addListener(async (tab) => {
-  if (!tab || !tab.id) return;
+async function openLifeMode(tab) {
+  if (!tab || !tab.id || !isSupportedUrl(tab.url || '')) {
+    return;
+  }
 
   try {
     await chrome.tabs.sendMessage(tab.id, { type: 'OPEN_LIFEMODE' });
-    await clearBadge(tab.id);
+    return;
   } catch (error) {
-    await showNeedsRefreshBadge(tab.id);
+    // Content script may not be awake yet. Inject it after the user clicks the icon.
   }
-});
 
-async function showNeedsRefreshBadge(tabId) {
   try {
-    await chrome.action.setBadgeText({ tabId, text: '!' });
-    await chrome.action.setBadgeBackgroundColor({ tabId, color: '#f59e0b' });
-    setTimeout(() => clearBadge(tabId), 2200);
+    await chrome.scripting.insertCSS({
+      target: { tabId: tab.id },
+      files: ['src/lifemode.css'],
+    });
+
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['src/content.js'],
+    });
+
+    await chrome.tabs.sendMessage(tab.id, { type: 'OPEN_LIFEMODE' });
   } catch (error) {
-    // Some browser pages do not allow extension UI. Keep this silent.
+    console.warn('LifeMode could not open on this page.', error);
   }
 }
 
-async function clearBadge(tabId) {
-  try {
-    await chrome.action.setBadgeText({ tabId, text: '' });
-  } catch (error) {
-    // Some browser pages do not allow extension UI. Keep this silent.
-  }
+function isSupportedUrl(url) {
+  return /^https?:\/\//i.test(url) || /^file:\/\//i.test(url);
 }
+
+chrome.action.onClicked.addListener(openLifeMode);
