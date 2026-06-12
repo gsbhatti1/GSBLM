@@ -143,7 +143,8 @@
 .lm-note-actions button,
 .lm-go-button,
 .lm-wide-button,
-.lm-help-grid a {
+.lm-help-grid a,
+.lm-help-grid button {
   min-height: 42px;
   border: 0;
   border-radius: 14px;
@@ -161,7 +162,8 @@
 .lm-companion-buttons button:nth-child(even),
 .lm-note-actions button:nth-child(even),
 .lm-go-button,
-.lm-help-grid a:nth-child(even) {
+.lm-help-grid a:nth-child(even),
+.lm-help-grid button:nth-child(even) {
   background: #ffffff;
   color: #102a43;
   border: 2px solid #d6d3cb;
@@ -278,6 +280,32 @@
   font-weight: 800;
 }
 
+.lm-small-label {
+  display: block;
+  margin: 8px 0 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #34495e;
+}
+
+.lm-help-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d6d3cb;
+  border-radius: 14px;
+  background: #fbfaf7;
+  color: #17202a;
+  font: inherit;
+}
+
+.lm-help-grid button {
+  font-family: inherit;
+}
+
+.lm-location-button {
+  margin-top: 4px;
+}
 .lm-status {
   min-height: 20px;
   margin: 10px 0 0;
@@ -293,24 +321,32 @@
 }
 
 .gsb-lifemode-link-target {
-  outline: 3px solid rgba(246, 173, 85, 0.85) !important;
-  outline-offset: 3px !important;
-  border-radius: 6px !important;
+  position: relative !important;
+  outline: 4px solid rgba(246, 173, 85, 0.95) !important;
+  outline-offset: 5px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 248, 237, 0.92) !important;
+  box-shadow: 0 0 0 4px rgba(16, 42, 67, 0.10) !important;
 }
 
-.gsb-lifemode-link-badge {
+.gsb-lifemode-link-target::before {
+  content: attr(data-lifemode-task) !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  margin-left: 8px !important;
-  margin-top: 4px !important;
-  padding: 3px 7px !important;
+  margin-right: 8px !important;
+  margin-bottom: 4px !important;
+  padding: 4px 8px !important;
   border-radius: 999px !important;
   background: #102a43 !important;
   color: #ffffff !important;
-  font: 700 12px/1.2 Arial, sans-serif !important;
+  font: 800 12px/1.2 Arial, sans-serif !important;
   white-space: nowrap !important;
   vertical-align: middle !important;
+}
+
+.gsb-lifemode-link-badge {
+  display: none !important;
 }
 
 html.gsb-lifemode-focus body > *:not(#gsb-lifemode-panel) {
