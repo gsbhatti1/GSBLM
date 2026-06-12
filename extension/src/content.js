@@ -99,7 +99,7 @@
           <p class="lm-muted">This first Companion is local. It reads the page structure and your note. No AI call yet.</p>
           <div class="lm-companion-buttons">
             <button type="button" data-companion="explain">Explain this page</button>
-            <button type="button" data-companion="missing">Check what Iâ€™m missing</button>
+            <button type="button" data-companion="missing">Check what I am missing</button>
             <button type="button" data-companion="next">What should I do next?</button>
             <button type="button" data-companion="description">Write a plain description</button>
             <button type="button" data-companion="questions">Questions for a helper</button>
@@ -135,22 +135,54 @@
       <section class="lm-tab-panel" data-panel="help" role="tabpanel" hidden>
         <section class="lm-card lm-help-card lm-urgent-card">
           <h3>Need help now?</h3>
-          <p>If you might hurt yourself, feel unsafe, or cannot stay alone, reach a real human now.</p>
+          <p>If there is immediate danger, call emergency services now. If you might hurt yourself, feel unsafe, or cannot stay alone, reach a real human now.</p>
           <div class="lm-help-grid">
-            <a href="https://www.veteranscrisisline.net/" target="_blank" rel="noopener">Veterans Crisis Line</a>
             <a href="tel:988">Call 988</a>
-            <a href="sms:838255">Text 838255</a>
+            <a href="sms:988">Text 988</a>
             <a href="https://988lifeline.org/" target="_blank" rel="noopener">988 Lifeline</a>
+            <a href="https://www.veteranscrisisline.net/" target="_blank" rel="noopener">Veterans Crisis Line</a>
           </div>
         </section>
 
         <section class="lm-card lm-help-card">
+          <div class="lm-badge">Civilian / Local Help</div>
+          <h3>Find local human help</h3>
+          <p class="lm-muted">Enter a ZIP code or city. LifeMode does not save your location.</p>
+          <label class="lm-small-label" for="lm-help-zip">ZIP code or city</label>
+          <input id="lm-help-zip" class="lm-help-input" type="text" inputmode="search" placeholder="Example: 84043 or Lehi, UT">
+          <div class="lm-help-grid">
+            <button type="button" data-local-search="emergency room">Find ER / hospital</button>
+            <button type="button" data-local-search="urgent care">Find urgent care</button>
+            <button type="button" data-local-search="community mental health center">Find mental health help</button>
+            <button type="button" data-local-search="free clinic">Find free clinic</button>
+            <button type="button" data-local-search="food pantry housing assistance">Food / housing help</button>
+            <button type="button" data-local-search="211 community resources">Find 211 resources</button>
+          </div>
+          <button type="button" class="lm-wide-button lm-location-button" data-action="use-location-once">Use my location once for nearest ER</button>
+          <p class="lm-note-help">Privacy rule: no background tracking. Location is only requested when you press the button.</p>
+        </section>
+
+        <section class="lm-card lm-help-card">
+          <div class="lm-badge">Veteran / Military Help</div>
           <h3>Veteran task help</h3>
           <div class="lm-help-grid">
+            <a href="tel:988">Call 988, then Press 1</a>
+            <a href="sms:838255">Text 838255</a>
             <a href="https://www.va.gov/get-help-from-accredited-representative/" target="_blank" rel="noopener">Find VSO / accredited rep</a>
             <a href="https://www.socialwork.va.gov/" target="_blank" rel="noopener">VA Social Work</a>
             <a href="https://www.va.gov/find-locations/" target="_blank" rel="noopener">Find VA location</a>
             <a href="https://www.woundedwarriorproject.org/" target="_blank" rel="noopener">Wounded Warrior Project</a>
+          </div>
+        </section>
+
+        <section class="lm-card lm-help-card">
+          <div class="lm-badge">Treatment / Support</div>
+          <h3>More support paths</h3>
+          <div class="lm-help-grid">
+            <a href="https://www.211.org/" target="_blank" rel="noopener">211 community help</a>
+            <a href="https://www.samhsa.gov/find-help" target="_blank" rel="noopener">SAMHSA Find Help</a>
+            <a href="https://findtreatment.gov/" target="_blank" rel="noopener">Find treatment</a>
+            <a href="https://www.findhelp.org/" target="_blank" rel="noopener">Find local services</a>
           </div>
         </section>
 
@@ -186,6 +218,10 @@
     panel.querySelector('[data-action="copy"]').addEventListener('click', copyHandoff);
     panel.querySelector('[data-action="copy-memory"]').addEventListener('click', copyHandoff);
     panel.querySelector('[data-action="copy-trusted"]').addEventListener('click', copyTrustedMessage);
+    panel.querySelectorAll('[data-local-search]').forEach((button) => {
+      button.addEventListener('click', () => openLocalHelpSearch(button.getAttribute('data-local-search')));
+    });
+    panel.querySelector('[data-action="use-location-once"]')?.addEventListener('click', openEmergencySearchWithLocation);
     panel.querySelector('[data-action="stop"]').addEventListener('click', stopReading);
     panel.querySelector('[data-action="save-note"]').addEventListener('click', saveMemoryNote);
     panel.querySelector('[data-action="clear-note"]').addEventListener('click', clearMemoryNote);
@@ -484,28 +520,27 @@
     const taskItems = model.taskLinks.slice(0, 8);
 
     taskItems.forEach((task, index) => {
-      const badge = document.createElement('span');
-      badge.className = LINK_BADGE_CLASS;
-      badge.textContent = `LifeMode ${index + 1}`;
-      badge.setAttribute('aria-hidden', 'true');
+      const label = `LifeMode ${index + 1}`;
 
       task.element.classList.add(LINK_TARGET_CLASS);
-      task.element.setAttribute('data-lifemode-task', String(index + 1));
-      task.element.insertAdjacentElement('afterend', badge);
+      task.element.setAttribute('data-lifemode-task', label);
+      task.element.setAttribute('data-lifemode-task-number', String(index + 1));
+      task.element.setAttribute('title', `${label}: ${task.label}`);
+
       lifeModeState.badgedElements.push(task.element);
     });
   }
-
   function clearLinkBadges() {
     document.querySelectorAll(`.${LINK_BADGE_CLASS}`).forEach((badge) => badge.remove());
     lifeModeState.badgedElements.forEach((element) => {
       if (!element || !element.classList) return;
       element.classList.remove(LINK_TARGET_CLASS);
       element.removeAttribute('data-lifemode-task');
+      element.removeAttribute('data-lifemode-task-number');
+      element.removeAttribute('title');
     });
     lifeModeState.badgedElements = [];
   }
-
   function toggleFocusMode() {
     document.documentElement.classList.toggle(FOCUS_CLASS);
     const enabled = document.documentElement.classList.contains(FOCUS_CLASS);
@@ -540,20 +575,57 @@
   function companionMissing(model) {
     if (model.pageType === 'Form Rescue') {
       const missing = getMissingFields(model);
+      const requiredCount = model.requiredFields.length;
+      const completedCount = Math.max(requiredCount - missing.length, 0);
+
       if (missing.length === 0) {
-        return setCompanionOutput('Application check', ['Required fields look filled.', 'Review your answers for accuracy before submitting.', 'If this is a claim, benefit, legal, medical, or money decision, consider asking a qualified human helper before final submission.'], 'Next: review the form slowly.');
+        return setCompanionOutput(
+          'Application check',
+          [
+            'Status: Ready for review.',
+            requiredCount > 0 ? `${completedCount}/${requiredCount} required fields look filled.` : 'I do not see missing required fields.',
+            'Review your answers for accuracy before submitting.',
+            'If this affects benefits, health, legal, money, housing, or claims, ask a qualified human helper before final submission when possible.',
+          ],
+          'Next: review the form slowly before submitting.'
+        );
       }
 
-      return setCompanionOutput('Application check', missing.map((field) => `Missing: ${field.label}`), `Next: fill ${missing[0].label}.`);
+      return setCompanionOutput(
+        'Application check',
+        [
+          'Status: Not ready yet.',
+          `${completedCount}/${requiredCount} required fields look complete.`,
+          'Missing required fields:',
+          ...missing.map((field, index) => `${index + 1}. ${field.label}`),
+          'Do not submit until required items are complete.',
+        ],
+        `Next: fill ${missing[0].label}.`
+      );
     }
 
     if (model.pageType === 'Task Portal') {
-      return setCompanionOutput('Check what Iâ€™m missing', ['This is a task portal, not a single application.', 'The missing step is choosing the task closest to your goal.', ...model.taskLinks.slice(0, 5).map((task) => `Possible task: ${task.label}`)], 'Next: choose one task link.');
+      return setCompanionOutput(
+        'Check what I am missing',
+        [
+          'This is a task portal, not a single application.',
+          'The missing step is choosing the task closest to your goal.',
+          ...model.taskLinks.slice(0, 5).map((task, index) => `Task ${index + 1}: ${task.label}`),
+        ],
+        'Next: choose one task link.'
+      );
     }
 
-    setCompanionOutput('Check what Iâ€™m missing', ['I do not see a form with required fields here.', 'Use the checklist to move through the main page sections.', 'If you expected an application, look for a button or link that says apply, start, continue, sign in, or submit.'], 'Next: follow the first unchecked checklist item.');
+    setCompanionOutput(
+      'Check what I am missing',
+      [
+        'I do not see a form with required fields here.',
+        'Use the checklist to move through the main page sections.',
+        'If you expected an application, look for a button or link that says apply, start, continue, sign in, or submit.',
+      ],
+      'Next: follow the first unchecked checklist item.'
+    );
   }
-
   function companionNextStep() {
     const next = document.getElementById('lm-next-step')?.textContent || 'Take one small step on this page.';
     setCompanionOutput('What should I do next?', [next, 'Do not solve the whole page right now.', 'Use Go to highlight the area, then complete only that step.'], next);
@@ -914,6 +986,38 @@
     setStatus('Reading stopped.');
   }
 
+  function openLocalHelpSearch(query) {
+    const safeQuery = cleanText(query, 120);
+    const locationText = cleanText(document.getElementById('lm-help-zip')?.value || '', 80);
+    const searchText = locationText ? `${safeQuery} near ${locationText}` : `${safeQuery} near me`;
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchText)}`;
+
+    window.open(url, '_blank', 'noopener');
+    setStatus(locationText ? `Opening local search near ${locationText}.` : 'Opening near-me local search.');
+  }
+
+  function openEmergencySearchWithLocation() {
+    if (!navigator.geolocation) {
+      setStatus('Location is not available. Enter ZIP code instead.');
+      return;
+    }
+
+    setStatus('Asking browser for one-time location. Nothing is saved.');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = Number(position.coords.latitude).toFixed(5);
+        const lng = Number(position.coords.longitude).toFixed(5);
+        const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`emergency room near ${lat},${lng}`)}`;
+        window.open(url, '_blank', 'noopener');
+        setStatus('Opening nearest ER search. Location was not saved.');
+      },
+      () => {
+        setStatus('Location was not allowed. Enter ZIP code or use a near-me button.');
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 0 }
+    );
+  }
   async function copyHandoff() {
     const title = lifeModeState.model?.title || document.title || 'Current page';
     const summary = document.getElementById('lm-summary')?.textContent || '';
