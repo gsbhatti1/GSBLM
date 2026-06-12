@@ -3,7 +3,7 @@
   top: 18px;
   right: 18px;
   z-index: 2147483647;
-  width: min(420px, calc(100vw - 36px));
+  width: min(440px, calc(100vw - 36px));
   max-height: calc(100vh - 36px);
   overflow: auto;
   padding: 18px;
@@ -30,7 +30,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .lm-kicker {
@@ -48,7 +48,8 @@
 #gsb-lifemode-panel ol,
 #gsb-lifemode-panel li,
 #gsb-lifemode-panel label,
-#gsb-lifemode-panel span {
+#gsb-lifemode-panel span,
+#gsb-lifemode-panel div {
   color: inherit;
 }
 
@@ -82,6 +83,37 @@
   color: #34495e;
 }
 
+.lm-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 1fr 1.35fr;
+  gap: 6px;
+  margin: 12px 0;
+  padding: 6px;
+  border: 1px solid #e2dfd7;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.lm-tab {
+  min-height: 38px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #34495e;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lm-tab.is-active {
+  background: #102a43;
+  color: #ffffff;
+}
+
+.lm-tab-panel[hidden] {
+  display: none !important;
+}
+
 .lm-badge {
   display: inline-flex;
   width: fit-content;
@@ -95,7 +127,8 @@
   letter-spacing: 0.03em;
 }
 
-.lm-actions {
+.lm-actions,
+.lm-companion-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
@@ -103,8 +136,10 @@
 }
 
 .lm-actions button,
+.lm-companion-actions button,
 .lm-note-actions button,
-.lm-go-button {
+.lm-go-button,
+.lm-wide-button {
   min-height: 42px;
   border: 0;
   border-radius: 14px;
@@ -117,6 +152,7 @@
 }
 
 .lm-actions button:nth-child(even),
+.lm-companion-actions button:nth-child(even),
 .lm-note-actions button:nth-child(even),
 .lm-go-button {
   background: #ffffff;
@@ -124,9 +160,14 @@
   border: 2px solid #d6d3cb;
 }
 
+.lm-wide-button {
+  width: 100%;
+}
+
 #gsb-lifemode-panel button:focus-visible,
 #gsb-lifemode-panel input:focus-visible,
-#gsb-lifemode-panel textarea:focus-visible {
+#gsb-lifemode-panel textarea:focus-visible,
+#gsb-lifemode-panel a:focus-visible {
   outline: 4px solid #f6ad55;
   outline-offset: 2px;
 }
@@ -210,7 +251,8 @@
   font-size: 13px;
 }
 
-#lm-note {
+#lm-note,
+#lm-rough-notes {
   width: 100%;
   min-height: 82px;
   resize: vertical;
@@ -229,6 +271,44 @@
   margin-top: 8px;
 }
 
+.lm-companion-output {
+  white-space: pre-wrap;
+  padding: 12px;
+  border: 1px solid #eee9de;
+  border-radius: 14px;
+  background: #fbfaf7;
+  color: #17202a;
+  font-size: 14px;
+}
+
+.lm-companion-output p {
+  margin: 0 0 10px;
+}
+
+.lm-companion-output p:last-child {
+  margin-bottom: 0;
+}
+
+.lm-help-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.lm-help-grid a {
+  display: block;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid #d6d3cb;
+  background: #fbfaf7;
+  color: #102a43;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.lm-help-grid a:hover {
+  text-decoration: underline;
+}
+
 .lm-status {
   min-height: 20px;
   margin: 10px 0 0;
@@ -241,6 +321,29 @@
   outline-offset: 5px !important;
   box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.22) !important;
   border-radius: 8px !important;
+}
+
+.gsb-lifemode-task-link {
+  position: relative !important;
+  outline: 3px solid #2b6cb0 !important;
+  outline-offset: 4px !important;
+  border-radius: 8px !important;
+  background-image: linear-gradient(rgba(232, 242, 255, 0.92), rgba(232, 242, 255, 0.92)) !important;
+}
+
+.gsb-lifemode-task-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin: 3px 6px 3px 0 !important;
+  padding: 3px 7px !important;
+  border-radius: 999px !important;
+  background: #102a43 !important;
+  color: #ffffff !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  vertical-align: middle !important;
 }
 
 html.gsb-lifemode-focus body > *:not(#gsb-lifemode-panel) {
@@ -267,7 +370,12 @@ html.gsb-lifemode-focus * {
     max-height: calc(100vh - 20px);
   }
 
+  .lm-tabs {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .lm-actions,
+  .lm-companion-actions,
   .lm-note-actions {
     grid-template-columns: 1fr;
   }
