@@ -302,6 +302,7 @@
     lifeModeState.items = items;
 
     renderSummary(model);
+    updatePrivateVaModeBanner();
     renderChecklist(items);
     updateNextStepFromChecklist();
     addTaskLinkBadges(model);
@@ -1469,4 +1470,72 @@
   });
 
   restorePanelOpenState();
+  // SPRINT6_JOURNEY_EVENT_DELEGATION
+  document.addEventListener('click', handleLifeModeJourneyDelegatedClick, true);
+
+  function handleLifeModeJourneyDelegatedClick(event) {
+    const target = event.target;
+    if (!target || !(target instanceof Element)) return;
+
+    const panel = target.closest(`#${LIFEMODE_PANEL_ID}`);
+    if (!panel) return;
+
+    const askButton = target.closest('[data-action="ask-companion"]');
+    if (askButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      handleCompanionQuestion();
+      return;
+    }
+
+    const journeyButton = target.closest('[data-journey]');
+    if (journeyButton) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const mode = journeyButton.getAttribute('data-journey');
+
+      if (mode === 'write-description') {
+        const note = document.getElementById('lm-note')?.value.trim() || '';
+
+        if (!note) {
+          setCompanionOutputWithActions(
+            'Write a description',
+            [
+              'First write rough notes in Memory.',
+              'Write what happened, what hurts, what you need, or how this affects daily life.',
+              'Do not worry about grammar. Companion will help shape it after you write rough notes.',
+            ],
+            'Next: open Memory and write rough notes.',
+            [
+              { label: 'Open Memory tab', action: 'open-memory' },
+              { label: 'Copy trusted person message', action: 'copy-trusted' },
+            ]
+          );
+          return;
+        }
+      }
+
+      handleJourney(mode);
+      return;
+    }
+
+    const journeyAction = target.closest('[data-journey-action]');
+    if (journeyAction) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const action = journeyAction.getAttribute('data-journey-action');
+
+      if (action === 'open-memory') {
+        activateTab('memory');
+        const note = document.getElementById('lm-note');
+        if (note) setTimeout(() => note.focus(), 150);
+        setStatus('Memory is open. Write rough notes here.');
+        return;
+      }
+
+      handleJourneyAction(action);
+    }
+  }
 })();
