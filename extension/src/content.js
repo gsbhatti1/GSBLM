@@ -2306,4 +2306,423 @@
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
   }
+  // SPRINT8_NO_THINKING_MODE
+
+  function getWalkStateKey() {
+    // Global journey memory across pages.
+    // Stores only goal + step, not answers, form values, VA login, SSN, claim number, or page text.
+    return `${WALK_STATE_PREFIX}global`;
+  }
+
+  function renderWalkHome() {
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="lm-badge">Walk With Me</div>
+      <h3>What are you trying to do today?</h3>
+      <p class="lm-muted">Choose one. LifeMode will show one step at a time.</p>
+
+      <div class="lm-walk-options">
+        <button type="button" data-walk-goal="va-disability">Apply for VA disability</button>
+        <button type="button" data-walk-goal="dd214-records">Get DD214 / service records</button>
+        <button type="button" data-walk-goal="check-claim">Check my VA claim</button>
+        <button type="button" data-walk-goal="upload-evidence">Upload evidence</button>
+        <button type="button" data-walk-goal="write-what-happened">Write what happened</button>
+        <button type="button" data-walk-goal="overwhelmed">I am overwhelmed</button>
+        <button type="button" data-walk-goal="need-human">I need a human</button>
+      </div>
+
+      <button type="button" class="lm-wide-button lm-light-button" data-walk-action="more-tools">Show advanced tools</button>
+    `;
+  }
+
+  function renderWalkResume(state) {
+    const flow = getWalkFlows()[state.goal];
+    if (!flow) return renderWalkHome();
+
+    const stepIndex = Math.min(Number(state.step || 0), flow.steps.length - 1);
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="lm-badge">Welcome back</div>
+      <h3>You were working on:</h3>
+      <p class="lm-walk-title">${escapeWalkHtml(flow.label)} - Step ${stepIndex + 1} of ${flow.steps.length}</p>
+      <p class="lm-muted">LifeMode saved the step, not your private answers.</p>
+
+      <div class="lm-walk-actions">
+        <button type="button" data-walk-action="resume">Resume</button>
+        <button type="button" data-walk-action="start-over">Start over</button>
+        <button type="button" data-walk-action="save-stop">Save and stop for today</button>
+        <button type="button" data-walk-action="more-tools">Show advanced tools</button>
+      </div>
+    `;
+  }
+
+  function renderWalkStep(state) {
+    const flow = getWalkFlows()[state.goal];
+    if (!flow) return renderWalkHome();
+
+    const stepIndex = Math.max(0, Math.min(Number(state.step || 0), flow.steps.length - 1));
+    const step = flow.steps[stepIndex];
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.setAttribute('data-goal', state.goal);
+    container.setAttribute('data-step', String(stepIndex));
+
+    const backButton = stepIndex > 0
+      ? '<button type="button" data-walk-action="back">Back</button>'
+      : '<button type="button" data-walk-action="start-over">Start over</button>';
+
+    container.innerHTML = `
+      <div class="lm-badge">Walk With Me</div>
+      <p class="lm-walk-progress">Step ${stepIndex + 1} of ${flow.steps.length}</p>
+      <h3>${escapeWalkHtml(step.title)}</h3>
+      <p class="lm-muted">${escapeWalkHtml(step.detail)}</p>
+
+      <button type="button" class="lm-step-read" data-walk-action="read-step">Read this step</button>
+
+      ${renderWalkPrimary(step)}
+
+      <div class="lm-walk-bottom lm-walk-primary-actions">
+        ${backButton}
+        <button type="button" data-walk-action="did-this">I did this</button>
+        <button type="button" data-walk-action="stuck">I am stuck</button>
+        <button type="button" data-walk-action="talk-human">Talk to a human</button>
+      </div>
+
+      <div class="lm-walk-secondary-actions">
+        <button type="button" data-walk-action="save-stop">Save and stop for today</button>
+        <button type="button" data-walk-action="create-helper-packet">Copy helper packet</button>
+        <button type="button" data-walk-action="more-tools">Show advanced tools</button>
+      </div>
+    `;
+  }
+
+  function handleWalkAction(button) {
+    const action = button.getAttribute('data-walk-action');
+
+    if (action === 'more-tools') return showWalkMoreTools('steps');
+    if (action === 'talk-human') return renderWalkHumanTriage();
+    if (action === 'read-step') return readCurrentWalkStep();
+    if (action === 'save-stop') return renderSaveAndStopForToday();
+    if (action === 'create-helper-packet') return copyHelperPacket();
+    if (action === 'human-urgent') return renderUrgentHumanHelp();
+    if (action === 'human-benefits') return renderBenefitsHumanHelp();
+    if (action === 'human-trusted') return copyTrustedMessage();
+    if (action === 'human-local') return showWalkMoreTools('help');
+    if (action === 'stuck-page') return renderStuckPageWillNotOpen();
+    if (action === 'stuck-meaning') return renderStuckMeaning();
+    if (action === 'stuck-signin') return renderStuckSignIn();
+    if (action === 'stuck-document') return renderStuckMissingDocument();
+    if (action === 'stuck-overwhelmed') return startWalkJourney('overwhelmed');
+
+    if (action === 'resume') return renderWalkStep(getCurrentOrDefaultWalkState());
+    if (action === 'start-over') {
+      clearWalkState();
+      renderWalkHome();
+      setStatus('Journey cleared. Start where you are.');
+      return;
+    }
+
+    if (action === 'open-url') {
+      const url = button.getAttribute('data-url');
+      if (url) window.open(url, '_blank', 'noopener');
+      setStatus('Opened official page. Come back and click I did this.');
+      return;
+    }
+
+    if (action === 'did-this') return advanceWalkStep();
+    if (action === 'back') return moveWalkStep(-1);
+    if (action === 'stuck') return renderWalkStuck();
+    if (action === 'evidence') return renderWalkEvidenceChecklist();
+    if (action === 'dd214-info') return renderDd214InfoChecklist();
+    if (action === 'description') return walkDescriptionDraft();
+    if (action === 'copy-vso') return copyVsoHandoff();
+    if (action === 'copy-records-handoff') return copyRecordsHandoff();
+    if (action === 'copy-trusted') return copyTrustedMessage();
+    if (action === 'save-walk-note') return saveWalkNoteAndAdvance();
+  }
+
+  function advanceWalkStep() {
+    const current = getCurrentWalkState();
+    const flow = getWalkFlows()[current.goal];
+    if (!flow) return renderWalkHome();
+
+    const nextStep = Number(current.step || 0) + 1;
+
+    if (nextStep >= flow.steps.length) {
+      const done = { goal: current.goal, step: flow.steps.length - 1, complete: true, updatedAt: Date.now() };
+      saveWalkState(done);
+      renderWalkComplete(flow);
+      setStatus('Checkpoint saved. This path is complete enough for now.');
+      return;
+    }
+
+    const state = { goal: current.goal, step: nextStep, updatedAt: Date.now() };
+    saveWalkState(state);
+    renderWalkStep(state);
+    setStatus(`Checkpoint saved. You are now on Step ${nextStep + 1} of ${flow.steps.length}.`);
+  }
+
+  function renderWalkStuck() {
+    const current = getCurrentWalkState();
+    const flow = getWalkFlows()[current.goal] || { label: 'this task', steps: [] };
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="lm-badge">You are not failing</div>
+      <h3>What kind of stuck?</h3>
+      <p class="lm-muted">Pick the closest one. You do not need to explain it perfectly.</p>
+
+      <div class="lm-walk-options">
+        <button type="button" data-walk-action="stuck-page">Page will not open</button>
+        <button type="button" data-walk-action="stuck-meaning">I do not know what this means</button>
+        <button type="button" data-walk-action="stuck-signin">I cannot sign in</button>
+        <button type="button" data-walk-action="stuck-document">I do not have this document</button>
+        <button type="button" data-walk-action="stuck-overwhelmed">I am overwhelmed</button>
+        <button type="button" data-walk-action="talk-human">I need a human</button>
+      </div>
+
+      <div class="lm-walk-secondary-actions">
+        <button type="button" data-walk-action="resume">Try this step again</button>
+        <button type="button" data-walk-action="create-helper-packet">Copy helper packet</button>
+        <button type="button" data-walk-action="save-stop">Save and stop for today</button>
+      </div>
+
+      <p class="lm-note-help">Current path: ${escapeWalkHtml(flow.label)}</p>
+    `;
+  }
+
+  function renderStuckPageWillNotOpen() {
+    renderSimpleWalkMessage(
+      'Page will not open',
+      [
+        'Check if the internet is working.',
+        'Try opening the official page again.',
+        'If it still fails, copy a helper packet or ask a human to open it with you.',
+      ],
+      [
+        { label: 'Try again', action: 'resume' },
+        { label: 'Copy helper packet', action: 'create-helper-packet' },
+        { label: 'Talk to a human', action: 'talk-human' },
+      ]
+    );
+  }
+
+  function renderStuckMeaning() {
+    renderSimpleWalkMessage(
+      'This page is hard to understand',
+      [
+        'That is the page, not you.',
+        'Use Show advanced tools if you want Companion to explain the current page.',
+        'Or copy a helper packet so a person can see where you are stuck.',
+      ],
+      [
+        { label: 'Show advanced tools', action: 'more-tools' },
+        { label: 'Copy helper packet', action: 'create-helper-packet' },
+        { label: 'Talk to a human', action: 'talk-human' },
+      ]
+    );
+  }
+
+  function renderStuckSignIn() {
+    renderSimpleWalkMessage(
+      'Sign-in is its own step',
+      [
+        'Use only official VA.gov, Login.gov, or ID.me sign-in pages.',
+        'LifeMode does not store your password, ID.me login, SSN, or claim number.',
+        'If sign-in fails repeatedly, stop and ask a real human for help.',
+      ],
+      [
+        { label: 'Try this step again', action: 'resume' },
+        { label: 'Talk to a human', action: 'talk-human' },
+        { label: 'Save and stop', action: 'save-stop' },
+      ]
+    );
+  }
+
+  function renderStuckMissingDocument() {
+    renderSimpleWalkMessage(
+      'Missing document',
+      [
+        'That is common. Missing a document does not mean you failed.',
+        'Start a missing document list.',
+        'If the missing document is DD214, use the DD214 / service records journey.',
+      ],
+      [
+        { label: 'Get DD214 / service records', goal: 'dd214-records' },
+        { label: 'Copy helper packet', action: 'create-helper-packet' },
+        { label: 'Talk to a human', action: 'talk-human' },
+      ]
+    );
+  }
+
+  function renderWalkHumanTriage() {
+    renderSimpleWalkMessage(
+      'What kind of human help?',
+      [
+        'Choose one door first. You can always come back.',
+      ],
+      [
+        { label: 'I need help now', action: 'human-urgent' },
+        { label: 'Veteran benefits help', action: 'human-benefits' },
+        { label: 'Someone I trust', action: 'human-trusted' },
+        { label: 'Local civilian help', action: 'human-local' },
+        { label: 'Back to step', action: 'resume' },
+      ]
+    );
+  }
+
+  function renderUrgentHumanHelp() {
+    renderSimpleWalkMessage(
+      'Reach a real human now',
+      [
+        'If there is immediate danger, call emergency services now.',
+        'Call or text 988 if you are in crisis or need someone to talk to.',
+        'Veterans can call 988 then Press 1 or text 838255.',
+      ],
+      [
+        { label: 'Call 988', href: 'tel:988' },
+        { label: 'Text 988', href: 'sms:988' },
+        { label: 'Text Veterans Crisis Line', href: 'sms:838255' },
+        { label: 'Human Help tab', action: 'human-local' },
+      ]
+    );
+  }
+
+  function renderBenefitsHumanHelp() {
+    renderSimpleWalkMessage(
+      'Veteran benefits help',
+      [
+        'For claims and benefits, a VSO or accredited representative is the safer human path.',
+        'LifeMode can make a packet so you do not have to explain from zero.',
+      ],
+      [
+        { label: 'Find VSO / accredited help', href: 'https://www.va.gov/get-help-from-accredited-representative/' },
+        { label: 'VA Social Work', href: 'https://www.socialwork.va.gov/' },
+        { label: 'Copy helper packet', action: 'create-helper-packet' },
+        { label: 'Back to step', action: 'resume' },
+      ]
+    );
+  }
+
+  function renderSaveAndStopForToday() {
+    const current = getCurrentWalkState();
+    const flow = getWalkFlows()[current.goal] || { label: 'this task', steps: [] };
+    const stepIndex = Math.min(Number(current.step || 0), Math.max(flow.steps.length - 1, 0));
+    saveWalkState({ goal: current.goal, step: stepIndex, updatedAt: Date.now(), paused: true });
+
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="lm-badge">Checkpoint saved</div>
+      <h3>You did enough for now.</h3>
+      <p class="lm-muted">Next time, LifeMode can bring you back to: ${escapeWalkHtml(flow.label)} - Step ${stepIndex + 1}.</p>
+
+      <div class="lm-walk-actions">
+        <button type="button" data-walk-action="resume">Resume now</button>
+        <button type="button" data-walk-action="create-helper-packet">Copy helper packet</button>
+        <button type="button" data-walk-action="talk-human">Talk to a human</button>
+        <button type="button" data-walk-action="start-over">Start over</button>
+      </div>
+    `;
+  }
+
+  function renderWalkComplete(flow) {
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="lm-badge">Saved</div>
+      <h3>You do not have to finish today.</h3>
+      <p class="lm-muted">Saved where you stopped: ${escapeWalkHtml(flow.label)}.</p>
+
+      <div class="lm-walk-actions">
+        <button type="button" data-walk-action="create-helper-packet">Copy helper packet</button>
+        <button type="button" data-walk-action="talk-human">Talk to a human</button>
+        <button type="button" data-walk-action="save-stop">Save and stop for today</button>
+        <button type="button" data-walk-action="start-over">Start over</button>
+      </div>
+    `;
+  }
+
+  function renderSimpleWalkMessage(title, bullets, actions = []) {
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    const bulletList = bullets.map((item) => `<li>${escapeWalkHtml(item)}</li>`).join('');
+    const buttons = actions.map((item) => {
+      if (item.href) {
+        return `<a class="lm-walk-action-link" href="${escapeWalkHtml(item.href)}" target="_blank" rel="noopener">${escapeWalkHtml(item.label)}</a>`;
+      }
+
+      if (item.goal) {
+        return `<button type="button" data-walk-goal="${escapeWalkHtml(item.goal)}">${escapeWalkHtml(item.label)}</button>`;
+      }
+
+      return `<button type="button" data-walk-action="${escapeWalkHtml(item.action)}">${escapeWalkHtml(item.label)}</button>`;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="lm-badge">Walk With Me</div>
+      <h3>${escapeWalkHtml(title)}</h3>
+      <ul class="lm-walk-list">${bulletList}</ul>
+      <div class="lm-walk-options">${buttons}</div>
+    `;
+  }
+
+  function readCurrentWalkStep() {
+    const current = getCurrentWalkState();
+    const flow = getWalkFlows()[current.goal];
+    if (!flow) return;
+
+    const step = flow.steps[Math.min(Number(current.step || 0), flow.steps.length - 1)];
+    if (!step) return;
+
+    const text = `LifeMode. Step ${Number(current.step || 0) + 1} of ${flow.steps.length}. ${step.title}. ${step.detail}`;
+
+    if (!('speechSynthesis' in window)) {
+      setStatus('Read aloud is not available in this browser.');
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.88;
+    window.speechSynthesis.speak(utterance);
+    setStatus('Reading this step.');
+  }
+
+  async function copyHelperPacket() {
+    const current = getCurrentWalkState();
+    const flow = getWalkFlows()[current.goal] || { label: 'Current task', steps: [] };
+    const stepIndex = Math.min(Number(current.step || 0), Math.max(flow.steps.length - 1, 0));
+    const step = flow.steps[stepIndex] || {};
+    const note = document.getElementById('lm-note')?.value.trim() || '';
+
+    const packet = [
+      `LifeMode helper packet: ${flow.label}`,
+      '',
+      `Current step: Step ${stepIndex + 1} of ${flow.steps.length || 1}`,
+      `Step title: ${step.title || 'Not available'}`,
+      `Step detail: ${step.detail || 'Not available'}`,
+      '',
+      note ? `Memory note: ${note}` : 'Memory note: none yet',
+      '',
+      'Questions for helper:',
+      '1. What should I do next?',
+      '2. Am I missing any records, documents, signatures, or deadlines?',
+      '3. Should I submit now, save it, or ask someone to review it first?',
+      '4. Is there a safer official page or person I should use?',
+      '',
+      `Page: ${location.href}`,
+    ].join('\n');
+
+    await copyText(packet, 'Helper packet copied.');
+  }
 })();
