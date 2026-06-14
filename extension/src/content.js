@@ -59,6 +59,11 @@
         <strong>Private demo mode:</strong> basic page scanning, notes, and checklists stay in this browser. No external AI call is made in this prototype.
       </section>
 
+
+      <section id="lm-private-va-mode" class="lm-private-va-card" hidden>
+        <div class="lm-badge">Private VA Mode</div>
+        <p><strong>Safety promise:</strong> LifeMode does not store VA passwords, ID.me login, SSN, or claim numbers. In this prototype, no external AI call is made. You control what you copy or write.</p>
+      </section>
       <section id="lm-first-run" class="lm-card lm-welcome-card" aria-label="LifeMode welcome">
         <div class="lm-badge">Welcome</div>
         <h3>Start with one step</h3>
@@ -107,8 +112,26 @@
       <section class="lm-tab-panel" data-panel="companion" role="tabpanel" hidden>
         <section class="lm-card">
           <div class="lm-badge">LifeMode Companion</div>
-          <h3>Ask without getting lost</h3>
-          <p class="lm-muted">This first Companion is local. It reads the page structure and your note. No AI call yet.</p>
+          <h3>Walk With Me</h3>
+          <p class="lm-muted">Type what you need or choose a journey. This is local guided flow only. No external AI call yet.</p>
+
+          <label class="lm-small-label" for="lm-companion-question">Ask Companion</label>
+          <textarea id="lm-companion-question" class="lm-companion-question" rows="3" placeholder="Example: I need to apply for VA disability."></textarea>
+          <button type="button" class="lm-wide-button" data-action="ask-companion">Ask Companion</button>
+
+          <div class="lm-journey-buttons" aria-label="LifeMode journeys">
+            <button type="button" data-journey="va-disability">I need to apply for VA disability</button>
+            <button type="button" data-journey="check-claim">I need to check my claim</button>
+            <button type="button" data-journey="upload-evidence">I need to upload evidence</button>
+            <button type="button" data-journey="write-description">Help write my description</button>
+            <button type="button" data-journey="overwhelmed">I am overwhelmed</button>
+            <button type="button" data-journey="find-human">Find a real human</button>
+          </div>
+        </section>
+
+        <section class="lm-card">
+          <h3>Quick local tools</h3>
+          <p class="lm-muted">These use the current page structure and your memory note.</p>
           <div class="lm-companion-buttons">
             <button type="button" data-companion="explain">Explain this page</button>
             <button type="button" data-companion="missing">Check what I am missing</button>
@@ -121,11 +144,10 @@
         <section class="lm-card lm-companion-response" aria-labelledby="lm-companion-title">
           <h3 id="lm-companion-title">Companion response</h3>
           <div id="lm-companion-output">
-            <p>Choose one button. Companion will answer with the simple version, what may be missing, and the next step.</p>
+            <p>Ask one question or choose one journey. Companion will keep it simple: what this means, what may be missing, and the next step.</p>
           </div>
         </section>
       </section>
-
       <section class="lm-tab-panel" data-panel="memory" role="tabpanel" hidden>
         <section class="lm-card" aria-labelledby="lm-note-title">
           <h3 id="lm-note-title">Memory note</h3>
@@ -575,6 +597,260 @@
     if (mode === 'questions') return companionQuestions(model);
   }
 
+  function updatePrivateVaModeBanner() {
+    const banner = document.getElementById('lm-private-va-mode');
+    if (!banner) return;
+    banner.hidden = !isVeteranPage();
+  }
+
+  function handleCompanionQuestion() {
+    activateTab('companion');
+
+    const input = document.getElementById('lm-companion-question');
+    const question = cleanText(input?.value || '', 300).toLowerCase();
+
+    if (!question) {
+      return setCompanionOutput(
+        'Ask Companion',
+        ['Type one thing you need help with.', 'Use plain words. Example: I need to apply for VA disability.', 'You do not need to know the official form name.'],
+        'Next: type one sentence and press Ask Companion.'
+      );
+    }
+
+    if (question.includes('disability') || question.includes('va claim') || question.includes('apply va') || question.includes('file claim')) {
+      return handleJourney('va-disability');
+    }
+
+    if (question.includes('claim status') || question.includes('check my claim') || question.includes('status')) {
+      return handleJourney('check-claim');
+    }
+
+    if (question.includes('upload') || question.includes('evidence') || question.includes('document')) {
+      return handleJourney('upload-evidence');
+    }
+
+    if (question.includes('write') || question.includes('description') || question.includes('statement') || question.includes('explain')) {
+      return handleJourney('write-description');
+    }
+
+    if (question.includes('overwhelmed') || question.includes('stuck') || question.includes('panic') || question.includes('too much')) {
+      return handleJourney('overwhelmed');
+    }
+
+    if (question.includes('human') || question.includes('vso') || question.includes('social worker') || question.includes('help')) {
+      return handleJourney('find-human');
+    }
+
+    setCompanionOutput(
+      'Companion heard you',
+      [
+        `You asked: ${question}`,
+        'I can help by explaining this page, checking what may be missing, or making questions for a helper.',
+        'If this is about VA disability, use the VA disability journey button.',
+      ],
+      'Next: choose one journey or one quick local tool.'
+    );
+  }
+
+  function handleJourney(mode) {
+    activateTab('companion');
+
+    if (mode === 'va-disability') {
+      return setCompanionOutputWithActions(
+        'VA Disability Journey',
+        [
+          'I can walk with you through the official VA path.',
+          'Use only official VA.gov sign-in pages for login.',
+          'Private VA Mode: LifeMode does not store your VA password, ID.me login, SSN, or claim numbers.',
+          'We will not do everything at once. First we open the official page, then we build a checklist.',
+        ],
+        'Next: open the official VA disability claim page.',
+        [
+          { label: 'Open VA disability claim page', href: 'https://www.va.gov/disability/how-to-file-claim/' },
+          { label: 'Open online application', href: 'https://www.va.gov/disability/file-disability-claim-form-21-526ez/introduction' },
+          { label: 'Find free VSO help', href: 'https://www.va.gov/get-help-from-accredited-representative/' },
+          { label: 'Prepare evidence checklist', action: 'evidence-checklist' },
+        ]
+      );
+    }
+
+    if (mode === 'check-claim') {
+      return setCompanionOutputWithActions(
+        'Check Claim Journey',
+        [
+          'We will use the official VA claim status path.',
+          'Sign in only on VA.gov.',
+          'After login, open LifeMode again and choose Check what I am missing.',
+          'LifeMode will help you understand the page, but it will not store your login or claim number.',
+        ],
+        'Next: open official claim status.',
+        [
+          { label: 'Open claim status', href: 'https://www.va.gov/claim-or-appeal-status/' },
+          { label: 'Find VSO help', href: 'https://www.va.gov/get-help-from-accredited-representative/' },
+          { label: 'Copy VSO handoff', action: 'copy-vso-handoff' },
+        ]
+      );
+    }
+
+    if (mode === 'upload-evidence') {
+      return setCompanionOutputWithActions(
+        'Upload Evidence Journey',
+        [
+          'Evidence can include records, supporting statements, and notes about how the condition affects daily life.',
+          'Do not upload anything you are unsure about without asking a qualified helper.',
+          'LifeMode can help you make a checklist and draft questions for a VSO.',
+        ],
+        'Next: prepare the evidence checklist before uploading.',
+        [
+          { label: 'Evidence checklist', action: 'evidence-checklist' },
+          { label: 'Find VSO help', href: 'https://www.va.gov/get-help-from-accredited-representative/' },
+          { label: 'Open VA disability page', href: 'https://www.va.gov/disability/how-to-file-claim/' },
+        ]
+      );
+    }
+
+    if (mode === 'write-description') {
+      const note = document.getElementById('lm-note')?.value.trim() || '';
+      if (!note) {
+        return setCompanionOutput(
+          'Write a description',
+          [
+            'First write rough notes in Memory.',
+            'Write what happened, what hurts, what you need, or how this affects daily life.',
+            'Do not worry about grammar. Companion will help shape it after you write rough notes.',
+          ],
+          'Next: open Memory and write rough notes.'
+        );
+      }
+
+      return companionDescription(lifeModeState.model || buildPageModel());
+    }
+
+    if (mode === 'overwhelmed') {
+      return setCompanionOutputWithActions(
+        'Overwhelmed Mode',
+        [
+          'You do not have to finish everything right now.',
+          'Take one breath and do only the next visible step.',
+          'If this is bigger than a page, reach a real human.',
+          'If you might hurt yourself or cannot stay safe, call or text 988 now. Veterans can call 988 then Press 1.',
+        ],
+        'Next: choose human help or return to Steps.',
+        [
+          { label: 'Open Human Help tab', action: 'open-human-help' },
+          { label: 'Call 988', href: 'tel:988' },
+          { label: 'Veterans Crisis Line', href: 'https://www.veteranscrisisline.net/' },
+          { label: 'Copy trusted person message', action: 'copy-trusted' },
+        ]
+      );
+    }
+
+    if (mode === 'find-human') {
+      return setCompanionOutputWithActions(
+        'Find a Real Human',
+        [
+          'Software is not enough for every moment.',
+          'Choose the kind of human help closest to what you need.',
+          'Veterans can use VSO, VA Social Work, Veterans Crisis Line, or trusted person handoff.',
+          'Civilians can use 988, 211, local ER, urgent care, mental health help, or trusted person handoff.',
+        ],
+        'Next: open Human Help.',
+        [
+          { label: 'Open Human Help tab', action: 'open-human-help' },
+          { label: 'Find VSO help', href: 'https://www.va.gov/get-help-from-accredited-representative/' },
+          { label: '211 community help', href: 'https://www.211.org/' },
+          { label: 'SAMHSA Find Help', href: 'https://www.samhsa.gov/find-help' },
+        ]
+      );
+    }
+  }
+
+  function handleJourneyAction(action) {
+    if (action === 'evidence-checklist') return showEvidenceChecklist();
+    if (action === 'copy-vso-handoff') return copyVsoHandoff();
+    if (action === 'copy-trusted') return copyTrustedMessage();
+    if (action === 'open-human-help') {
+      activateTab('help');
+      setStatus('Human Help is open.');
+      return;
+    }
+    if (action === 'open-memory') {
+      activateTab('memory');
+      setStatus('Memory is open.');
+      return;
+    }
+  }
+
+  function showEvidenceChecklist() {
+    setCompanionOutputWithActions(
+      'Evidence Checklist',
+      [
+        'DD214 or separation papers if available.',
+        'VA medical records if available.',
+        'Private medical records if available.',
+        'Supporting statements from people who know what changed.',
+        'A short daily-impact note in your own words.',
+        'Dates, places, units, or events if you remember them.',
+        'Questions for a VSO or accredited representative.',
+      ],
+      'Next: pick one condition and write one daily-impact note in Memory.',
+      [
+        { label: 'Open Memory tab', action: 'open-memory' },
+        { label: 'Find VSO help', href: 'https://www.va.gov/get-help-from-accredited-representative/' },
+        { label: 'Copy VSO handoff', action: 'copy-vso-handoff' },
+      ]
+    );
+  }
+
+  function setCompanionOutputWithActions(title, bullets, nextLine, actions = []) {
+    setCompanionOutput(title, bullets, nextLine);
+
+    const output = document.getElementById('lm-companion-output');
+    if (!output || actions.length === 0) return;
+
+    const actionGrid = document.createElement('div');
+    actionGrid.className = 'lm-journey-actions';
+
+    actions.forEach((action) => {
+      if (action.href) {
+        const link = document.createElement('a');
+        link.href = action.href;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = action.label;
+        actionGrid.appendChild(link);
+        return;
+      }
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = action.label;
+      button.setAttribute('data-journey-action', action.action);
+      actionGrid.appendChild(button);
+    });
+
+    output.appendChild(actionGrid);
+  }
+
+  async function copyVsoHandoff() {
+    const note = document.getElementById('lm-note')?.value.trim() || '';
+    const nextStep = document.getElementById('lm-next-step')?.textContent || 'I need help understanding my next step.';
+    const text = [
+      'Can you help me with my VA disability process?',
+      '',
+      `Page: ${location.href}`,
+      `LifeMode next step: ${nextStep}`,
+      note ? `My note: ${note}` : '',
+      '',
+      'Questions:',
+      '1. What should I do next?',
+      '2. Am I missing evidence, records, statements, or signatures?',
+      '3. Should I submit, save, or wait for review?',
+      '4. Is there a deadline I should know about?',
+    ].filter(Boolean).join('\n');
+
+    await copyText(text, 'VSO handoff copied.');
+  }
   function companionExplain(model) {
     const bullets = [];
     bullets.push(`Page type: ${model.pageType}.`);
