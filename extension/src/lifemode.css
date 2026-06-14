@@ -463,3 +463,104 @@ html.gsb-lifemode-focus * {
     grid-template-columns: 1fr;
   }
 }
+
+/* SPRINT7_WALK_WITH_ME_DD214 */
+#gsb-lifemode-panel.lm-walk-default .lm-tabs,
+#gsb-lifemode-panel.lm-walk-default .lm-tab-panel,
+#gsb-lifemode-panel.lm-walk-default #lm-first-run {
+  display: none !important;
+}
+
+#lm-walk-mode[hidden] {
+  display: none !important;
+}
+
+.lm-walk-screen {
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px solid #b6d4fe;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.lm-walk-screen h3 {
+  font-size: 20px !important;
+  line-height: 1.2 !important;
+}
+
+.lm-walk-title {
+  margin: 8px 0;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.lm-walk-progress {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #52606d;
+}
+
+.lm-walk-options,
+.lm-walk-actions,
+.lm-walk-bottom {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.lm-walk-options button,
+.lm-walk-actions button,
+.lm-walk-bottom button,
+.lm-walk-main,
+.lm-light-button {
+  min-height: 46px;
+  border: 0;
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: #102a43;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.lm-walk-bottom button,
+.lm-light-button {
+  background: #ffffff;
+  color: #102a43;
+  border: 2px solid #d6d3cb;
+}
+
+.lm-walk-main {
+  width: 100%;
+  margin: 12px 0 4px;
+}
+
+.lm-walk-list {
+  margin: 10px 0;
+  padding-left: 22px;
+}
+
+.lm-walk-list li {
+  margin: 8px 0;
+}
+
+.lm-walk-draft {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 14px;
+  background: #fbfaf7;
+  border: 1px solid #eee9de;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+@media (min-width: 480px) {
+  .lm-walk-options {
+    grid-template-columns: 1fr 1fr;
+  }
+}

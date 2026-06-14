@@ -1538,4 +1538,772 @@
       handleJourneyAction(action);
     }
   }
+  // SPRINT7_WALK_WITH_ME_DD214
+  const WALK_STATE_PREFIX = 'lifemode-walk-state:';
+
+  const walkBootTimer = window.setInterval(() => {
+    if (ensureWalkMode()) {
+      window.clearInterval(walkBootTimer);
+    }
+  }, 250);
+
+  window.setTimeout(() => window.clearInterval(walkBootTimer), 12000);
+
+  new MutationObserver(() => {
+    ensureWalkMode();
+  }).observe(document.documentElement, { childList: true, subtree: true });
+
+  window.addEventListener('GSB_LIFEMODE_OPEN', () => {
+    window.setTimeout(() => ensureWalkMode(), 60);
+  });
+
+  document.addEventListener('click', handleWalkDelegatedClick, true);
+
+  function ensureWalkMode() {
+    const panel = document.getElementById(LIFEMODE_PANEL_ID);
+    if (!panel) return false;
+
+    if (!document.getElementById('lm-walk-mode')) {
+      const walk = document.createElement('section');
+      walk.id = 'lm-walk-mode';
+      walk.className = 'lm-walk-screen';
+      walk.setAttribute('aria-label', 'Walk With Me');
+      walk.innerHTML = '<div id="lm-walk-content"></div>';
+
+      const tabs = panel.querySelector('.lm-tabs');
+      if (tabs) {
+        tabs.insertAdjacentElement('beforebegin', walk);
+      } else {
+        panel.appendChild(walk);
+      }
+    }
+
+    if (!panel.classList.contains('lm-walk-ready')) {
+      panel.classList.add('lm-walk-ready', 'lm-walk-default');
+      renderWalkResumeOrHome();
+    }
+
+    updatePrivateVaModeBanner();
+    return true;
+  }
+
+  function handleWalkDelegatedClick(event) {
+    const target = event.target;
+    if (!target || !(target instanceof Element)) return;
+
+    const panel = target.closest(`#${LIFEMODE_PANEL_ID}`);
+    if (!panel) return;
+
+    const askButton = target.closest('[data-action="ask-companion"]');
+    if (askButton) {
+      const question = cleanText(document.getElementById('lm-companion-question')?.value || '', 300).toLowerCase();
+      if (isDd214Intent(question)) {
+        event.preventDefault();
+        event.stopPropagation();
+        startWalkJourney('dd214-records');
+        return;
+      }
+    }
+
+    const journeyButton = target.closest('[data-journey]');
+    if (journeyButton) {
+      const mode = journeyButton.getAttribute('data-journey');
+
+      if (mode === 'va-disability') {
+        event.preventDefault();
+        event.stopPropagation();
+        startWalkJourney('va-disability');
+        return;
+      }
+
+      if (mode === 'check-claim') {
+        event.preventDefault();
+        event.stopPropagation();
+        startWalkJourney('check-claim');
+        return;
+      }
+
+      if (mode === 'upload-evidence') {
+        event.preventDefault();
+        event.stopPropagation();
+        startWalkJourney('upload-evidence');
+        return;
+      }
+
+      if (mode === 'write-description') {
+        event.preventDefault();
+        event.stopPropagation();
+        startWalkJourney('write-what-happened');
+        return;
+      }
+
+      if (mode === 'overwhelmed') {
+        event.preventDefault();
+        event.stopPropagation();
+        startWalkJourney('overwhelmed');
+        return;
+      }
+
+      if (mode === 'find-human') {
+        event.preventDefault();
+        event.stopPropagation();
+        startWalkJourney('need-human');
+        return;
+      }
+    }
+
+    const goalButton = target.closest('[data-walk-goal]');
+    if (goalButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      startWalkJourney(goalButton.getAttribute('data-walk-goal'));
+      return;
+    }
+
+    const actionButton = target.closest('[data-walk-action]');
+    if (actionButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      handleWalkAction(actionButton);
+    }
+  }
+
+  function isDd214Intent(value) {
+    const text = cleanText(value, 300).toLowerCase();
+    return text.includes('dd214') ||
+      text.includes('dd 214') ||
+      text.includes('dd-214') ||
+      text.includes('service record') ||
+      text.includes('service records') ||
+      text.includes('military record') ||
+      text.includes('military records') ||
+      text.includes('separation paper') ||
+      text.includes('separation papers') ||
+      text.includes('discharge paper') ||
+      text.includes('discharge papers');
+  }
+
+  function getWalkStateKey() {
+    return `${WALK_STATE_PREFIX}${location.origin}${location.pathname}`;
+  }
+
+  function getWalkFlows() {
+    return {
+      'va-disability': {
+        label: 'Apply for VA disability',
+        steps: [
+          {
+            title: 'Open the official VA disability page.',
+            detail: 'Do not sign in anywhere except VA.gov.',
+            primaryLabel: 'Open official VA page',
+            url: 'https://www.va.gov/disability/how-to-file-claim/',
+          },
+          {
+            title: 'Sign in only on VA.gov.',
+            detail: 'Private VA Mode is on. LifeMode does not store your VA password, ID.me login, SSN, or claim number.',
+            primaryLabel: 'Open online application',
+            url: 'https://www.va.gov/disability/file-disability-claim-form-21-526ez/introduction',
+          },
+          {
+            title: 'Choose what you are working on.',
+            detail: 'Start new claim, continue saved claim, upload evidence, check status, or ask a helper if you are not sure.',
+            primaryLabel: 'Show VA task options',
+            special: 'va-task-options',
+          },
+          {
+            title: 'Make your evidence checklist.',
+            detail: 'You do not need everything right now. Start with what you have.',
+            primaryLabel: 'Show evidence checklist',
+            special: 'evidence',
+          },
+          {
+            title: 'Write your daily impact note.',
+            detail: 'Use rough words. Do not worry about grammar. Write how this affects sleep, work, body, family, memory, mood, or daily life.',
+            primaryLabel: 'Save rough note',
+            special: 'daily-note',
+          },
+          {
+            title: 'Before submitting, consider asking a qualified human helper.',
+            detail: 'LifeMode can make a clean handoff for a VSO or accredited representative.',
+            primaryLabel: 'Copy VSO handoff',
+            special: 'vso',
+          },
+        ],
+      },
+      'dd214-records': {
+        label: 'Get DD214 / service records',
+        steps: [
+          {
+            title: 'Start with the official VA records page.',
+            detail: 'Your DD214 is part of your military service records. Use official VA.gov or National Archives pages.',
+            primaryLabel: 'Open VA records page',
+            url: 'https://www.va.gov/records/get-military-service-records/',
+          },
+          {
+            title: 'Choose how you want to request records.',
+            detail: 'Most Veterans can request records online through National Archives eVetRecs, or use Standard Form 180 by mail or fax.',
+            primaryLabel: 'Show request options',
+            special: 'dd214-options',
+          },
+          {
+            title: 'Gather only what the request asks for.',
+            detail: 'Do not save SSN or private identifiers inside LifeMode. Keep sensitive information on the official site or form.',
+            primaryLabel: 'Show info checklist',
+            special: 'dd214-info',
+          },
+          {
+            title: 'Submit through the official source.',
+            detail: 'If you are applying for VA benefits, VA may request your DD214 after receiving your application. If you need your own copy, use official records paths.',
+            primaryLabel: 'Open eVetRecs',
+            url: 'https://vetrecs.archives.gov/',
+          },
+          {
+            title: 'Save where you stopped.',
+            detail: 'Copy a clean handoff if you need a VSO, county Veteran office, or trusted person to help.',
+            primaryLabel: 'Copy records handoff',
+            special: 'dd214-handoff',
+          },
+        ],
+      },
+      'check-claim': {
+        label: 'Check my VA claim',
+        steps: [
+          {
+            title: 'Open the official VA claim status page.',
+            detail: 'Sign in only on VA.gov.',
+            primaryLabel: 'Open claim status',
+            url: 'https://www.va.gov/claim-or-appeal-status/',
+          },
+          {
+            title: 'Read the status slowly.',
+            detail: 'Use LifeMode to explain the page after it loads. Do not try to solve the whole thing at once.',
+            primaryLabel: 'Open More tools',
+            special: 'more-tools',
+          },
+          {
+            title: 'If you are confused, ask a VSO.',
+            detail: 'A helper can explain what the status means and what to do next.',
+            primaryLabel: 'Copy VSO handoff',
+            special: 'vso',
+          },
+        ],
+      },
+      'upload-evidence': {
+        label: 'Upload evidence',
+        steps: [
+          {
+            title: 'Prepare before uploading.',
+            detail: 'List what you have first. Do not upload something you are unsure about without asking a qualified helper.',
+            primaryLabel: 'Show evidence checklist',
+            special: 'evidence',
+          },
+          {
+            title: 'Open the official VA page.',
+            detail: 'Use VA.gov only. LifeMode does not store your login or claim number.',
+            primaryLabel: 'Open VA disability page',
+            url: 'https://www.va.gov/disability/how-to-file-claim/',
+          },
+          {
+            title: 'Ask a helper if unsure.',
+            detail: 'If this evidence affects a claim, it is okay to ask a VSO before submitting.',
+            primaryLabel: 'Copy VSO handoff',
+            special: 'vso',
+          },
+        ],
+      },
+      'write-what-happened': {
+        label: 'Write what happened',
+        steps: [
+          {
+            title: 'Write rough notes.',
+            detail: 'Use your words. Do not worry about grammar. Write what happened and how it affects daily life.',
+            primaryLabel: 'Save rough note',
+            special: 'daily-note',
+          },
+          {
+            title: 'Make it clearer.',
+            detail: 'LifeMode can shape your rough note into a plain draft. Review it. Only keep what is true.',
+            primaryLabel: 'Help make this clearer',
+            special: 'description',
+          },
+          {
+            title: 'Prepare questions for a helper.',
+            detail: 'If this is for a claim or important form, ask a qualified person to review it.',
+            primaryLabel: 'Copy VSO handoff',
+            special: 'vso',
+          },
+        ],
+      },
+      'overwhelmed': {
+        label: 'I am overwhelmed',
+        steps: [
+          {
+            title: 'Stop trying to finish everything.',
+            detail: 'You do not have to finish the whole page right now. Take one breath. Choose one small step.',
+            primaryLabel: 'Show Human Help',
+            special: 'human-help',
+          },
+          {
+            title: 'If this is bigger than a page, reach a real human.',
+            detail: 'If you might hurt yourself or cannot stay safe, call or text 988 now. Veterans can call 988 then Press 1.',
+            primaryLabel: 'Call 988',
+            url: 'tel:988',
+          },
+        ],
+      },
+      'need-human': {
+        label: 'I need a human',
+        steps: [
+          {
+            title: 'Open Human Help.',
+            detail: 'Choose the kind of human help closest to what you need.',
+            primaryLabel: 'Show Human Help',
+            special: 'human-help',
+          },
+          {
+            title: 'Send a clean message to someone you trust.',
+            detail: 'LifeMode can copy where you are stuck and what the next step is.',
+            primaryLabel: 'Copy trusted person message',
+            special: 'trusted',
+          },
+        ],
+      },
+    };
+  }
+
+  function renderWalkResumeOrHome() {
+    chrome.storage.local.get([getWalkStateKey()]).then((result) => {
+      const state = result[getWalkStateKey()];
+      if (state && state.goal) {
+        renderWalkResume(state);
+        return;
+      }
+
+      renderWalkHome();
+    });
+  }
+
+  function renderWalkHome() {
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="lm-badge">Walk With Me</div>
+      <h3>What are you trying to do today?</h3>
+      <p class="lm-muted">Choose one. LifeMode will show one step at a time.</p>
+
+      <div class="lm-walk-options">
+        <button type="button" data-walk-goal="va-disability">Apply for VA disability</button>
+        <button type="button" data-walk-goal="dd214-records">Get DD214 / service records</button>
+        <button type="button" data-walk-goal="check-claim">Check my VA claim</button>
+        <button type="button" data-walk-goal="upload-evidence">Upload evidence</button>
+        <button type="button" data-walk-goal="write-what-happened">Write what happened</button>
+        <button type="button" data-walk-goal="overwhelmed">I am overwhelmed</button>
+        <button type="button" data-walk-goal="need-human">I need a human</button>
+      </div>
+
+      <button type="button" class="lm-wide-button lm-light-button" data-walk-action="more-tools">More tools</button>
+    `;
+  }
+
+  function renderWalkResume(state) {
+    const flow = getWalkFlows()[state.goal];
+    if (!flow) return renderWalkHome();
+
+    const stepIndex = Math.min(Number(state.step || 0), flow.steps.length - 1);
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="lm-badge">Welcome back</div>
+      <h3>You were working on:</h3>
+      <p class="lm-walk-title">${escapeWalkHtml(flow.label)} - Step ${stepIndex + 1} of ${flow.steps.length}</p>
+      <p class="lm-muted">LifeMode saved the step, not your private answers.</p>
+
+      <div class="lm-walk-actions">
+        <button type="button" data-walk-action="resume">Resume</button>
+        <button type="button" data-walk-action="start-over">Start over</button>
+        <button type="button" data-walk-action="more-tools">More tools</button>
+      </div>
+    `;
+  }
+
+  function startWalkJourney(goal) {
+    const flow = getWalkFlows()[goal];
+    if (!flow) return;
+
+    const panel = document.getElementById(LIFEMODE_PANEL_ID);
+    if (panel) panel.classList.add('lm-walk-default');
+
+    const walk = document.getElementById('lm-walk-mode');
+    if (walk) walk.hidden = false;
+
+    const state = { goal, step: 0 };
+    saveWalkState(state);
+    renderWalkStep(state);
+  }
+
+  function saveWalkState(state) {
+    chrome.storage.local.set({ [getWalkStateKey()]: state });
+  }
+
+  function clearWalkState() {
+    chrome.storage.local.remove(getWalkStateKey());
+  }
+
+  function getCurrentWalkState() {
+    const container = document.getElementById('lm-walk-content');
+    return {
+      goal: container?.getAttribute('data-goal') || '',
+      step: Number(container?.getAttribute('data-step') || 0),
+    };
+  }
+
+  function renderWalkStep(state) {
+    const flow = getWalkFlows()[state.goal];
+    if (!flow) return renderWalkHome();
+
+    const stepIndex = Math.max(0, Math.min(Number(state.step || 0), flow.steps.length - 1));
+    const step = flow.steps[stepIndex];
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.setAttribute('data-goal', state.goal);
+    container.setAttribute('data-step', String(stepIndex));
+
+    const backButton = stepIndex > 0
+      ? '<button type="button" data-walk-action="back">Back</button>'
+      : '<button type="button" data-walk-action="start-over">Start over</button>';
+
+    container.innerHTML = `
+      <div class="lm-badge">Walk With Me</div>
+      <p class="lm-walk-progress">Step ${stepIndex + 1} of ${flow.steps.length}</p>
+      <h3>${escapeWalkHtml(step.title)}</h3>
+      <p class="lm-muted">${escapeWalkHtml(step.detail)}</p>
+
+      ${renderWalkPrimary(step)}
+
+      <div class="lm-walk-bottom">
+        ${backButton}
+        <button type="button" data-walk-action="did-this">I did this</button>
+        <button type="button" data-walk-action="stuck">I am stuck</button>
+        <button type="button" data-walk-action="talk-human">Talk to a human</button>
+        <button type="button" data-walk-action="more-tools">More tools</button>
+      </div>
+    `;
+  }
+
+  function renderWalkPrimary(step) {
+    if (step.url) {
+      return `<button type="button" class="lm-walk-main" data-walk-action="open-url" data-url="${escapeWalkHtml(step.url)}">${escapeWalkHtml(step.primaryLabel)}</button>`;
+    }
+
+    if (step.special === 'daily-note') {
+      return `
+        <textarea id="lm-walk-note" class="lm-companion-question" rows="5" placeholder="Write rough notes here. Example: My back pain affects my sleep and work."></textarea>
+        <button type="button" class="lm-walk-main" data-walk-action="save-walk-note">${escapeWalkHtml(step.primaryLabel)}</button>
+      `;
+    }
+
+    if (step.special === 'va-task-options') {
+      return `
+        <div class="lm-walk-options">
+          <button type="button" data-walk-action="open-url" data-url="https://www.va.gov/disability/file-disability-claim-form-21-526ez/introduction">Start new disability claim</button>
+          <button type="button" data-walk-action="open-url" data-url="https://www.va.gov/claim-or-appeal-status/">Continue or check claim</button>
+          <button type="button" data-walk-action="evidence">Upload / prepare evidence</button>
+          <button type="button" data-walk-action="talk-human">I do not know</button>
+        </div>
+      `;
+    }
+
+    if (step.special === 'dd214-options') {
+      return `
+        <div class="lm-walk-options">
+          <button type="button" data-walk-action="open-url" data-url="https://vetrecs.archives.gov/">Request online with eVetRecs</button>
+          <button type="button" data-walk-action="open-url" data-url="https://www.va.gov/records/get-military-service-records/">Open VA instructions</button>
+          <button type="button" data-walk-action="open-url" data-url="https://www.archives.gov/veterans/military-service-records">Open National Archives</button>
+          <button type="button" data-walk-action="open-url" data-url="https://milconnect.dmdc.osd.mil/milconnect/">Open milConnect</button>
+        </div>
+      `;
+    }
+
+    if (step.special === 'dd214-info') {
+      return `<button type="button" class="lm-walk-main" data-walk-action="dd214-info">${escapeWalkHtml(step.primaryLabel)}</button>`;
+    }
+
+    if (step.special === 'dd214-handoff') {
+      return `<button type="button" class="lm-walk-main" data-walk-action="copy-records-handoff">${escapeWalkHtml(step.primaryLabel)}</button>`;
+    }
+
+    if (step.special === 'evidence') {
+      return `<button type="button" class="lm-walk-main" data-walk-action="evidence">${escapeWalkHtml(step.primaryLabel)}</button>`;
+    }
+
+    if (step.special === 'description') {
+      return `<button type="button" class="lm-walk-main" data-walk-action="description">${escapeWalkHtml(step.primaryLabel)}</button>`;
+    }
+
+    if (step.special === 'vso') {
+      return `<button type="button" class="lm-walk-main" data-walk-action="copy-vso">${escapeWalkHtml(step.primaryLabel)}</button>`;
+    }
+
+    if (step.special === 'human-help') {
+      return `<button type="button" class="lm-walk-main" data-walk-action="talk-human">${escapeWalkHtml(step.primaryLabel)}</button>`;
+    }
+
+    if (step.special === 'trusted') {
+      return `<button type="button" class="lm-walk-main" data-walk-action="copy-trusted">${escapeWalkHtml(step.primaryLabel)}</button>`;
+    }
+
+    if (step.special === 'more-tools') {
+      return `<button type="button" class="lm-walk-main" data-walk-action="more-tools">${escapeWalkHtml(step.primaryLabel)}</button>`;
+    }
+
+    return `<button type="button" class="lm-walk-main" data-walk-action="did-this">${escapeWalkHtml(step.primaryLabel || 'I did this')}</button>`;
+  }
+
+  function handleWalkAction(button) {
+    const action = button.getAttribute('data-walk-action');
+
+    if (action === 'more-tools') return showWalkMoreTools('steps');
+    if (action === 'talk-human') return showWalkMoreTools('help');
+    if (action === 'resume') return renderWalkStep(getCurrentOrDefaultWalkState());
+    if (action === 'start-over') {
+      clearWalkState();
+      renderWalkHome();
+      return;
+    }
+
+    if (action === 'open-url') {
+      const url = button.getAttribute('data-url');
+      if (url) window.open(url, '_blank', 'noopener');
+      setStatus('Opened official page. Come back and click I did this.');
+      return;
+    }
+
+    if (action === 'did-this') return advanceWalkStep();
+    if (action === 'back') return moveWalkStep(-1);
+    if (action === 'stuck') return renderWalkStuck();
+    if (action === 'evidence') return renderWalkEvidenceChecklist();
+    if (action === 'dd214-info') return renderDd214InfoChecklist();
+    if (action === 'description') return walkDescriptionDraft();
+    if (action === 'copy-vso') return copyVsoHandoff();
+    if (action === 'copy-records-handoff') return copyRecordsHandoff();
+    if (action === 'copy-trusted') return copyTrustedMessage();
+    if (action === 'save-walk-note') return saveWalkNoteAndAdvance();
+  }
+
+  function getCurrentOrDefaultWalkState() {
+    const current = getCurrentWalkState();
+    if (current.goal) return current;
+    return { goal: 'va-disability', step: 0 };
+  }
+
+  function advanceWalkStep() {
+    const current = getCurrentWalkState();
+    const flow = getWalkFlows()[current.goal];
+    if (!flow) return renderWalkHome();
+
+    const nextStep = Number(current.step || 0) + 1;
+
+    if (nextStep >= flow.steps.length) {
+      const done = { goal: current.goal, step: flow.steps.length - 1, complete: true };
+      saveWalkState(done);
+      renderWalkComplete(flow);
+      return;
+    }
+
+    const state = { goal: current.goal, step: nextStep };
+    saveWalkState(state);
+    renderWalkStep(state);
+  }
+
+  function moveWalkStep(delta) {
+    const current = getCurrentWalkState();
+    const flow = getWalkFlows()[current.goal];
+    if (!flow) return renderWalkHome();
+
+    const nextStep = Math.max(0, Math.min(Number(current.step || 0) + delta, flow.steps.length - 1));
+    const state = { goal: current.goal, step: nextStep };
+    saveWalkState(state);
+    renderWalkStep(state);
+  }
+
+  function renderWalkStuck() {
+    const current = getCurrentWalkState();
+    const flow = getWalkFlows()[current.goal] || { label: 'this task', steps: [] };
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="lm-badge">You are not failing</div>
+      <h3>That is okay. This page is heavy.</h3>
+      <p class="lm-muted">You do not have to finish everything right now. Choose one safe next move.</p>
+
+      <div class="lm-walk-actions">
+        <button type="button" data-walk-action="resume">Try this step again</button>
+        <button type="button" data-walk-action="copy-trusted">Copy message to helper</button>
+        <button type="button" data-walk-action="talk-human">Talk to a human</button>
+        <button type="button" data-walk-action="more-tools">More tools</button>
+      </div>
+
+      <p class="lm-note-help">Current path: ${escapeWalkHtml(flow.label)}</p>
+    `;
+  }
+
+  function renderWalkEvidenceChecklist() {
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="lm-badge">Evidence checklist</div>
+      <h3>Start with what you have.</h3>
+      <p class="lm-muted">You do not need everything right now. This is only a guide.</p>
+
+      <ul class="lm-walk-list">
+        <li>DD214 or separation papers</li>
+        <li>VA medical records</li>
+        <li>Private medical records</li>
+        <li>Supporting statements from people who know what changed</li>
+        <li>Daily impact note in your own words</li>
+        <li>Dates, places, units, or events if you remember them</li>
+      </ul>
+
+      <div class="lm-walk-bottom">
+        <button type="button" data-walk-action="resume">Back to step</button>
+        <button type="button" data-walk-action="did-this">I did this</button>
+        <button type="button" data-walk-action="copy-vso">Copy VSO handoff</button>
+        <button type="button" data-walk-action="talk-human">Talk to a human</button>
+      </div>
+    `;
+  }
+
+  function renderDd214InfoChecklist() {
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="lm-badge">DD214 request info</div>
+      <h3>Gather only what the official request asks for.</h3>
+      <p class="lm-muted">Do not save SSN, service number, or private identifiers inside LifeMode.</p>
+
+      <ul class="lm-walk-list">
+        <li>Name used while in service</li>
+        <li>Branch of service</li>
+        <li>Approximate dates of service</li>
+        <li>Date and place of birth</li>
+        <li>Service number or SSN only on the official form/site</li>
+        <li>If records may be fire-related: place of discharge, last unit, and place of entry if known</li>
+      </ul>
+
+      <div class="lm-walk-bottom">
+        <button type="button" data-walk-action="resume">Back to step</button>
+        <button type="button" data-walk-action="did-this">I understand</button>
+        <button type="button" data-walk-action="copy-records-handoff">Copy records handoff</button>
+        <button type="button" data-walk-action="talk-human">Talk to a human</button>
+      </div>
+    `;
+  }
+
+  function saveWalkNoteAndAdvance() {
+    const text = document.getElementById('lm-walk-note')?.value.trim() || '';
+    if (!text) {
+      setStatus('Write rough notes first. A few words is enough.');
+      return;
+    }
+
+    const noteEl = document.getElementById('lm-note');
+    if (noteEl) noteEl.value = text;
+
+    chrome.storage.local.set({ [lifeModeState.noteKey]: text });
+    setStatus('Rough note saved in Memory.');
+    advanceWalkStep();
+  }
+
+  function walkDescriptionDraft() {
+    const note = document.getElementById('lm-note')?.value.trim() || '';
+    if (!note) {
+      renderWalkStep({ goal: 'write-what-happened', step: 0 });
+      setStatus('Write rough notes first.');
+      return;
+    }
+
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="lm-badge">Plain draft</div>
+      <h3>Review this. Only keep what is true.</h3>
+      <p class="lm-muted">LifeMode shaped your rough note into clearer words. Edit before using anywhere.</p>
+
+      <div class="lm-walk-draft">
+        I am asking for help with this process. The part I am trying to explain is: ${escapeWalkHtml(note)}
+        <br><br>
+        This affects my daily life, and I may need help understanding what evidence, records, or next steps are needed.
+      </div>
+
+      <div class="lm-walk-bottom">
+        <button type="button" data-walk-action="resume">Back to step</button>
+        <button type="button" data-walk-action="copy-vso">Copy VSO handoff</button>
+        <button type="button" data-walk-action="talk-human">Talk to a human</button>
+        <button type="button" data-walk-action="more-tools">More tools</button>
+      </div>
+    `;
+  }
+
+  async function copyRecordsHandoff() {
+    const text = [
+      'Can you help me request my DD214 or military service records?',
+      '',
+      `Page: ${location.href}`,
+      '',
+      'LifeMode says I may need help with:',
+      '1. Choosing the right official request path',
+      '2. Knowing whether to use eVetRecs, SF-180, milConnect, or a personnel command',
+      '3. Avoiding unofficial paid services if a free official path works',
+      '4. Checking what information I need before I submit',
+      '',
+      'Please help me take the next step.',
+    ].join('\n');
+
+    await copyText(text, 'Records handoff copied.');
+  }
+
+  function renderWalkComplete(flow) {
+    const container = document.getElementById('lm-walk-content');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="lm-badge">Saved</div>
+      <h3>You do not have to finish today.</h3>
+      <p class="lm-muted">Saved where you stopped: ${escapeWalkHtml(flow.label)}.</p>
+
+      <div class="lm-walk-actions">
+        <button type="button" data-walk-action="start-over">Start over</button>
+        <button type="button" data-walk-action="copy-vso">Copy VSO handoff</button>
+        <button type="button" data-walk-action="talk-human">Talk to a human</button>
+        <button type="button" data-walk-action="more-tools">More tools</button>
+      </div>
+    `;
+  }
+
+  function showWalkMoreTools(tabName = 'steps') {
+    const panel = document.getElementById(LIFEMODE_PANEL_ID);
+    if (panel) panel.classList.remove('lm-walk-default');
+
+    const walk = document.getElementById('lm-walk-mode');
+    if (walk) walk.hidden = true;
+
+    activateTab(tabName);
+    setStatus('More tools are open.');
+  }
+
+  function escapeWalkHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 })();
