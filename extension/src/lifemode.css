@@ -107,6 +107,64 @@
 .lm-welcome-card[hidden] {
   display: none !important;
 }
+
+.lm-companion-question {
+  width: 100%;
+  min-height: 86px;
+  resize: vertical;
+  padding: 11px;
+  border: 1px solid #d6d3cb;
+  border-radius: 14px;
+  background: #fbfaf7;
+  color: #17202a;
+  font: inherit;
+}
+
+.lm-journey-buttons,
+.lm-journey-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.lm-journey-buttons button,
+.lm-journey-actions button,
+.lm-journey-actions a {
+  min-height: 42px;
+  border: 0;
+  border-radius: 14px;
+  padding: 9px 10px;
+  background: #102a43;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.lm-journey-buttons button:nth-child(even),
+.lm-journey-actions button:nth-child(even),
+.lm-journey-actions a:nth-child(even) {
+  background: #ffffff;
+  color: #102a43;
+  border: 2px solid #d6d3cb;
+}
+
+.lm-private-va-card {
+  margin: 8px 0 12px;
+  padding: 12px;
+  border: 1px solid #f6ad55;
+  border-radius: 16px;
+  background: #fff8ed;
+  color: #17202a;
+}
+
+.lm-private-va-card[hidden] {
+  display: none !important;
+}
 .lm-tabs {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
