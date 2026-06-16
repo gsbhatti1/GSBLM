@@ -33,6 +33,7 @@ LifeMode starts on the page the user is already stuck on. It does not require a 
 - Link badges / task highlights
 - Memory notes
 - Refresh persistence
+- Wayfinder (dynamic A-to-B routing + field notes; see docs/WAYFINDER.md)
 
 ## Local install
 
