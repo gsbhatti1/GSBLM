@@ -7,6 +7,7 @@ import { loadMemory, upsertMemory, removeMemory } from '../lib/memory';
 import type { MemoryRecord, NextStepResult } from '../lib/types';
 import { contactsByKind, type HelpContact } from '../lib/help';
 import { makeReader } from '../lib/readaloud';
+import { listenOnce, voiceAvailable } from '../lib/voice';
 
 const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.tab'));
 const panels: Record<string, HTMLElement> = {
@@ -43,6 +44,12 @@ chrome.runtime.onMessage.addListener((raw: unknown) => {
   const msg = raw as WorkerToPanel;
   if (msg?.type === 'NEXT_STEP_READY') {
     lastResult = msg.result;
+    if (pendingVoiceSpeak) {
+      pendingVoiceSpeak = false;
+      const s = msg.result.step;
+      if (voiceAnswer) voiceAnswer.textContent = `${s.title}. ${s.plainExplanation}`;
+      reader.speak(`${s.title}. ${s.plainExplanation}`);
+    }
     if (explainOut && explainOut.textContent === 'Reading this page…') {
       renderExplain(msg.result);
     }
@@ -268,3 +275,46 @@ focusBtn?.addEventListener('click', () => {
   focusBtn.setAttribute('aria-pressed', String(focusOn));
   focusBtn.textContent = focusOn ? 'Focus on' : 'Focus mode';
 });
+
+// --- Voice input (LM-15) ---
+const askVoiceBtn = document.getElementById('askVoice') as HTMLButtonElement | null;
+const voiceStatus = document.getElementById('voiceStatus');
+const voiceAnswer = document.getElementById('voiceAnswer');
+
+function setVoiceStatus(text: string): void {
+  if (voiceStatus) voiceStatus.textContent = text;
+}
+
+askVoiceBtn?.addEventListener('click', async () => {
+  if (!voiceAvailable()) {
+    setVoiceStatus('Voice input is not available in this browser. You can still type or tap.');
+    return;
+  }
+  setVoiceStatus('Listening… speak your question.');
+  if (voiceAnswer) voiceAnswer.textContent = '';
+
+  const outcome = await listenOnce();
+  if (!outcome.ok) {
+    const messages: Record<string, string> = {
+      unavailable: 'Voice input is not available here.',
+      denied: 'Microphone access was blocked. You can allow it in your browser settings, or just type.',
+      'no-speech': "I didn't catch that. Try again, or tap a button instead.",
+      error: 'Something went wrong with voice. You can still use the buttons.',
+    };
+    setVoiceStatus(messages[outcome.reason]);
+    return;
+  }
+
+  setVoiceStatus(`You asked: "${outcome.transcript}"`);
+  // For now, a spoken question triggers the on-device page explanation and reads it
+  // back. Full conversational answers arrive once the cloud AI proxy (LM-23) is live.
+  const req: PanelToWorker = { type: 'REQUEST_NEXT_STEP' };
+  void chrome.runtime.sendMessage(req);
+  if (voiceAnswer) {
+    voiceAnswer.textContent = 'Let me look at this page and read you the next step…';
+  }
+  // When the result returns, speak it.
+  pendingVoiceSpeak = true;
+});
+
+let pendingVoiceSpeak = false;
