@@ -4,7 +4,8 @@
 
 import type { PanelToWorker, WorkerToPanel } from '../lib/messages';
 import { loadMemory, upsertMemory, removeMemory } from '../lib/memory';
-import type { MemoryRecord } from '../lib/types';
+import type { MemoryRecord, NextStepResult } from '../lib/types';
+import { contactsByKind, type HelpContact } from '../lib/help';
 
 const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.tab'));
 const panels: Record<string, HTMLElement> = {
@@ -40,6 +41,7 @@ getStep.addEventListener('click', () => {
 chrome.runtime.onMessage.addListener((raw: unknown) => {
   const msg = raw as WorkerToPanel;
   if (msg?.type === 'NEXT_STEP_READY') {
+    lastResult = msg.result;
     const { step, summary, matchedKnownProcess, aiTier } = msg.result;
     stepCard.innerHTML = '';
 
@@ -134,3 +136,65 @@ memSave?.addEventListener('click', () => {
 });
 
 void loadMemory().then(renderMemory);
+
+// --- Human help tab (LM-17) ---
+let lastResult: NextStepResult | null = null;
+const helpResults = document.getElementById('helpResults');
+
+function renderContacts(contacts: HelpContact[]): void {
+  if (!helpResults) return;
+  helpResults.innerHTML = '';
+  if (contacts.length === 0) {
+    helpResults.innerHTML = '<p class="step-body muted" style="font-size:14px">No contacts found.</p>';
+    return;
+  }
+  for (const c of contacts) {
+    const card = document.createElement('div');
+    card.style.cssText = 'border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px';
+    const name = document.createElement('p');
+    name.style.cssText = 'font-weight:600;margin:0 0 4px';
+    name.textContent = c.name;
+    const desc = document.createElement('p');
+    desc.className = 'step-body muted';
+    desc.style.cssText = 'font-size:14px;margin:0 0 8px';
+    desc.textContent = c.description;
+    card.append(name, desc);
+    if (c.phone) {
+      const tel = document.createElement('a');
+      tel.href = `tel:${c.phone.replace(/[^0-9]/g, '')}`;
+      tel.textContent = `Call ${c.phone}`;
+      tel.style.cssText = 'display:inline-block;margin-right:14px;color:var(--accent)';
+      card.append(tel);
+    }
+    if (c.url) {
+      const link = document.createElement('a');
+      link.href = c.url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = 'Open website';
+      link.style.color = 'var(--accent)';
+      card.append(link);
+    }
+    helpResults.append(card);
+  }
+}
+
+for (const btn of Array.from(document.querySelectorAll<HTMLButtonElement>('[data-help]'))) {
+  btn.addEventListener('click', () => {
+    const kind = btn.dataset.help as HelpContact['kind'];
+    renderContacts(contactsByKind(kind));
+  });
+}
+
+// Trusted-person handoff (LM-17/LM-19 seed): a CONTENT-FREE summary.
+// No page text, no form values, no PII — just which task and which step.
+const shareTrusted = document.getElementById('shareTrusted') as HTMLButtonElement | null;
+shareTrusted?.addEventListener('click', () => {
+  if (!helpResults) return;
+  const stepTitle = lastResult?.step.title ?? 'a task';
+  const note =
+    `I'm working on "${stepTitle}" and could use a hand. ` +
+    `Can you help me with this step when you have a moment?`;
+  void navigator.clipboard?.writeText(note).catch(() => {});
+  helpResults.innerHTML = `<p class="step-body" style="font-size:14px">Copied a short message you can paste to someone you trust:</p><p class="step-body muted" style="font-size:14px">${note}</p>`;
+});

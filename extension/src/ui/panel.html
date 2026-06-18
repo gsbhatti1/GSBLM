@@ -123,9 +123,12 @@
 
     <section id="helpPanel" class="tabpanel" role="tabpanel" aria-labelledby="tabHelp" hidden>
       <div class="panel-card">
-        <div class="help-row"><span>Talk to a local helper</span><button class="secondary" type="button">Find</button></div>
-        <div class="help-row"><span>Veteran support</span><button class="secondary" type="button">Find</button></div>
-        <div class="help-row" style="border-bottom:0"><span>Send this to someone I trust</span><button class="secondary" type="button">Share</button></div>
+        <p class="step-body muted" style="margin-top:0">You never pay for help. These are free.</p>
+        <div class="help-row"><span>Talk to a local helper</span><button class="secondary" type="button" data-help="local">Find</button></div>
+        <div class="help-row"><span>Veteran support</span><button class="secondary" type="button" data-help="veteran">Find</button></div>
+        <div class="help-row"><span>Someone to talk to now</span><button class="secondary" type="button" data-help="crisis">Find</button></div>
+        <div class="help-row" style="border-bottom:0"><span>Send this to someone I trust</span><button id="shareTrusted" class="secondary" type="button">Share</button></div>
+        <div id="helpResults" style="margin-top:14px"></div>
       </div>
     </section>
 
