@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LifeMode Demo - VA Claim Companion</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #f3f0e8; color: #17202a; line-height: 1.5; }
+    header { padding: 28px; background: #102a43; color: #fff; }
+    main { max-width: 920px; margin: 0 auto; padding: 28px; }
+    section, form { margin: 18px 0; padding: 22px; border-radius: 18px; background: #fff; border: 1px solid #ded8cc; }
+    label { display: block; margin: 16px 0 6px; font-weight: 700; }
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #aab4c0; border-radius: 10px; font: inherit; }
+    button { margin-top: 18px; padding: 12px 18px; border: 0; border-radius: 12px; background: #102a43; color: #fff; font-weight: 700; cursor: pointer; }
+    .hint { color: #52606d; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>VA Claim Companion Demo</h1>
+    <p>Safe demo page for Application Check, Companion questions, Memory, and Human Help routing.</p>
+  </header>
+  <main>
+    <section>
+      <h2>Before you start</h2>
+      <p>This demo does not submit anything. It exists so LifeMode can test a hard workflow without touching private data.</p>
+    </section>
+    <form>
+      <h2>Disability claim preparation</h2>
+      <p class="hint">Fields marked required are needed before you ask a helper to review this draft.</p>
+      <label for="condition">Condition or issue *</label>
+      <input id="condition" name="condition" required placeholder="Example: back pain, PTSD, migraines">
+      <label for="started">When did it start? *</label>
+      <input id="started" name="started" required placeholder="Example: during deployment in 2011">
+      <label for="impact">How does it affect daily life? *</label>
+      <textarea id="impact" name="impact" rows="5" required></textarea>
+      <label for="records">Do you have medical records?</label>
+      <select id="records" name="records">
+        <option value="">Choose one</option>
+        <option>VA records</option>
+        <option>Private records</option>
+        <option>Both</option>
+        <option>Not sure</option>
+      </select>
+      <label for="helper">Who should review this before submission?</label>
+      <select id="helper" name="helper">
+        <option value="">Choose one</option>
+        <option>VSO / accredited representative</option>
+        <option>VA social worker</option>
+        <option>Trusted caregiver</option>
+        <option>I am not sure</option>
+      </select>
+      <button type="submit">Review claim prep</button>
+    </form>
+  </main>
+</body>
+</html>

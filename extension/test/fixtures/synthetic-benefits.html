@@ -1,0 +1,44 @@
+<!-- Synthetic fixture modeling a typical gov benefits form.
+     Replace/supplement with REAL saved pages: va.html, snap.html, housing.html.
+     Save a real form via browser "Save page as > HTML only" into this folder. -->
+<main>
+  <h1>Apply for assistance</h1>
+  <p>Please complete all required fields before the deadline. Applications are due by March 31, 2026.</p>
+
+  <form>
+    <label for="firstName">First name</label>
+    <input id="firstName" name="firstName" type="text" required />
+
+    <label for="lastName">Last name</label>
+    <input id="lastName" name="lastName" type="text" required />
+
+    <label for="dob">Date of birth</label>
+    <input id="dob" name="dob" type="date" required />
+
+    <label for="ssn">Social Security Number</label>
+    <input id="ssn" name="ssn" type="text" required />
+
+    <label for="phone">Phone number</label>
+    <input id="phone" name="phone" type="tel" />
+
+    <label for="street">Street address</label>
+    <input id="street" name="street" type="text" required />
+
+    <label for="state">State</label>
+    <select id="state" name="state" required>
+      <option>Utah</option>
+      <option>Nevada</option>
+      <option>Idaho</option>
+    </select>
+
+    <label for="veteran">Are you a veteran?</label>
+    <input id="veteran" name="veteran" type="checkbox" />
+
+    <label for="proof">Upload proof of income</label>
+    <input id="proof" name="proof" type="file" required />
+
+    <div role="alert" class="error">Please correct the highlighted fields.</div>
+
+    <button type="submit">Submit application</button>
+  </form>
+</main>

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GSB LifeMode</title>
+    <style>
+      :root {
+        --ink: #1f2421;
+        --muted: #5f6b64;
+        --line: #d9e0db;
+        --bg: #ffffff;
+        --accent: #0f6e56;
+        --accent-ink: #ffffff;
+        --focus: #1d9e75;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #e9eee9;
+          --muted: #a6b1aa;
+          --line: #2b332e;
+          --bg: #141815;
+          --accent: #1d9e75;
+          --accent-ink: #06231b;
+          --focus: #5dcaa5;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 18px;
+        line-height: 1.6;
+        color: var(--ink);
+        background: var(--bg);
+        padding: 16px;
+      }
+      h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+      .tagline { color: var(--muted); font-size: 15px; margin: 0 0 16px; }
+      .primary {
+        width: 100%;
+        font-size: 19px;
+        font-weight: 600;
+        padding: 16px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--accent);
+        color: var(--accent-ink);
+        cursor: pointer;
+      }
+      .primary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+      .panel-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 16px;
+        min-height: 96px;
+      }
+      .step-title { font-size: 18px; font-weight: 600; margin: 0 0 6px; }
+      .step-body { color: var(--ink); margin: 0; }
+      .muted { color: var(--muted); }
+      nav { display: flex; gap: 4px; margin-top: 20px; border-top: 1px solid var(--line); padding-top: 12px; }
+      .tab {
+        flex: 1;
+        font-size: 14px;
+        padding: 10px 6px;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        border-radius: 8px;
+      }
+      .tab[aria-selected="true"] { color: var(--ink); font-weight: 600; background: var(--line); }
+      .tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+      .tabpanel { margin-top: 14px; }
+      [hidden] { display: none; }
+      .help-row {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line);
+      }
+      .secondary {
+        font-size: 15px; padding: 10px 14px; border: 1px solid var(--line);
+        background: transparent; color: var(--ink); border-radius: 10px; cursor: pointer;
+      }
+      .secondary:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+    </style>
+  </head>
+  <body>
+    <h1>LifeMode</h1>
+    <p class="tagline">One clear next step.</p>
+
+    <button id="getStep" class="primary" type="button">Start first step</button>
+
+    <section id="stepsPanel" class="tabpanel" role="tabpanel" aria-labelledby="tabSteps">
+      <div class="panel-card" id="stepCard">
+        <p class="step-body muted" id="stepPlaceholder">
+          Tap “Start first step” and LifeMode will read this page and show you one thing to do.
+        </p>
+      </div>
+    </section>
+
+    <section id="companionPanel" class="tabpanel" role="tabpanel" aria-labelledby="tabCompanion" hidden>
+      <div class="panel-card">
+        <button class="secondary" id="explainBtn" type="button">Explain this page</button>
+        <p class="step-body muted" id="explainOut" style="margin-top:12px"></p>
+      </div>
+    </section>
+
+    <section id="memoryPanel" class="tabpanel" role="tabpanel" aria-labelledby="tabMemory" hidden>
+      <div class="panel-card">
+        <p class="step-body muted">Saved facts you can reuse on forms will appear here. (Coming in LM-16.)</p>
+      </div>
+    </section>
+
+    <section id="helpPanel" class="tabpanel" role="tabpanel" aria-labelledby="tabHelp" hidden>
+      <div class="panel-card">
+        <div class="help-row"><span>Talk to a local helper</span><button class="secondary" type="button">Find</button></div>
+        <div class="help-row"><span>Veteran support</span><button class="secondary" type="button">Find</button></div>
+        <div class="help-row" style="border-bottom:0"><span>Send this to someone I trust</span><button class="secondary" type="button">Share</button></div>
+      </div>
+    </section>
+
+    <nav role="tablist" aria-label="LifeMode sections">
+      <button id="tabSteps" class="tab" role="tab" aria-selected="true" aria-controls="stepsPanel">Steps</button>
+      <button id="tabCompanion" class="tab" role="tab" aria-selected="false" aria-controls="companionPanel">Companion</button>
+      <button id="tabMemory" class="tab" role="tab" aria-selected="false" aria-controls="memoryPanel">Memory</button>
+      <button id="tabHelp" class="tab" role="tab" aria-selected="false" aria-controls="helpPanel">Human help</button>
+    </nav>
+
+    <script type="module" src="./panel.ts"></script>
+  </body>
+</html>
