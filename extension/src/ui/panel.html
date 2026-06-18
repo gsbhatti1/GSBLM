@@ -108,7 +108,16 @@
 
     <section id="memoryPanel" class="tabpanel" role="tabpanel" aria-labelledby="tabMemory" hidden>
       <div class="panel-card">
-        <p class="step-body muted">Saved facts you can reuse on forms will appear here. (Coming in LM-16.)</p>
+        <p class="step-body muted" style="margin-top:0">Save facts once, reuse them on forms. Stored encrypted on this device only.</p>
+        <label for="memLabel" style="font-size:14px">What is it (e.g. Street address)</label>
+        <input id="memLabel" type="text" style="width:100%;font-size:16px;padding:10px;margin:4px 0 10px;border:1px solid var(--line);border-radius:8px" />
+        <label for="memValue" style="font-size:14px">The value</label>
+        <input id="memValue" type="text" style="width:100%;font-size:16px;padding:10px;margin:4px 0 10px;border:1px solid var(--line);border-radius:8px" />
+        <label style="font-size:14px;display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <input id="memSensitive" type="checkbox" /> Sensitive (ask before filling)
+        </label>
+        <button id="memSave" class="secondary" type="button">Save this fact</button>
+        <div id="memList" style="margin-top:16px"></div>
       </div>
     </section>
 

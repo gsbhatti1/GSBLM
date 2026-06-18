@@ -70,3 +70,20 @@ export function matchMemoryToFields(
   }
   return out;
 }
+
+/** Add or update a single fact by key, then persist. */
+export async function upsertMemory(record: MemoryRecord): Promise<MemoryRecord[]> {
+  const all = await loadMemory();
+  const idx = all.findIndex((r) => r.key === record.key);
+  if (idx >= 0) all[idx] = record;
+  else all.push(record);
+  await saveMemory(all);
+  return all;
+}
+
+/** Remove a fact by key, then persist. */
+export async function removeMemory(key: string): Promise<MemoryRecord[]> {
+  const all = (await loadMemory()).filter((r) => r.key !== key);
+  await saveMemory(all);
+  return all;
+}
