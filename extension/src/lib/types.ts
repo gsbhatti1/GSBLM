@@ -66,3 +66,14 @@ export interface AnalyticsEvent {
 
 /** Where the AI request was served. */
 export type AiTier = 'on_device' | 'cloud';
+
+/** The single calm output the panel renders. */
+export interface NextStepResult {
+  summary: string;
+  step: TaskStep;
+  templateId: string;
+  templateVersion: string;
+  aiTier: AiTier;
+  autofillSuggestions: string[];
+  matchedKnownProcess: boolean;
+}

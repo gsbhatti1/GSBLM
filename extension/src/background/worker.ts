@@ -1,9 +1,8 @@
-// Service worker (LM-03).
-// The broker between the panel and the page's content script.
+// Service worker (LM-03 + LM-12).
+// Broker between panel and the page's content script.
 //   - Toolbar click opens the side panel.
-//   - Panel asks for the next step -> worker tells the active tab's content script
-//     to extract -> worker relays the result back to the panel.
-//   - Worker also forwards analytics-consent changes.
+//   - Panel asks for the next step -> worker tells the active tab to compute it
+//     -> worker relays the NextStepResult back to the panel.
 
 import { setAnalyticsConsent } from '../lib/analytics';
 import type {
@@ -12,7 +11,6 @@ import type {
   WorkerToPanel,
 } from '../lib/messages';
 
-// Open the side panel when the toolbar icon is clicked.
 chrome.action.onClicked.addListener(async (tab) => {
   if (tab.windowId !== undefined) {
     await chrome.sidePanel.open({ windowId: tab.windowId });
@@ -31,7 +29,6 @@ function toPanel(msg: WorkerToPanel): void {
 chrome.runtime.onMessage.addListener((raw: unknown, _sender, sendResponse) => {
   const msg = raw as PanelToWorker | ContentToWorker;
 
-  // From the panel: kick off extraction on the active tab.
   if (msg?.type === 'REQUEST_NEXT_STEP') {
     void (async () => {
       const tabId = await activeTabId();
@@ -40,7 +37,7 @@ chrome.runtime.onMessage.addListener((raw: unknown, _sender, sendResponse) => {
         return;
       }
       try {
-        await chrome.tabs.sendMessage(tabId, { type: 'EXTRACT_PAGE' });
+        await chrome.tabs.sendMessage(tabId, { type: 'COMPUTE_NEXT_STEP' });
       } catch {
         toPanel({
           type: 'NEXT_STEP_FAILED',
@@ -52,9 +49,8 @@ chrome.runtime.onMessage.addListener((raw: unknown, _sender, sendResponse) => {
     return true;
   }
 
-  // From the content script: relay the extracted page up to the panel.
-  if (msg?.type === 'PAGE_EXTRACTED') {
-    toPanel({ type: 'NEXT_STEP_READY', page: msg.page });
+  if (msg?.type === 'NEXT_STEP_RESULT') {
+    toPanel({ type: 'NEXT_STEP_READY', result: msg.result });
     return false;
   }
   if (msg?.type === 'EXTRACT_FAILED') {
@@ -62,7 +58,6 @@ chrome.runtime.onMessage.addListener((raw: unknown, _sender, sendResponse) => {
     return false;
   }
 
-  // Analytics consent toggle from the panel.
   if (msg?.type === 'SET_ANALYTICS_CONSENT') {
     setAnalyticsConsent(msg.on);
     sendResponse({ ok: true });

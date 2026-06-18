@@ -8,17 +8,9 @@ import { loadTemplates, matchTemplate, nextStep, genericSteps } from '../taskgra
 import { allTemplates } from '../taskgraph/index';
 import { loadMemory, matchMemoryToFields } from '../lib/memory';
 import { trackEvent } from '../lib/analytics';
-import type { TaskStep, AiTier } from '../lib/types';
+import type { TaskStep } from '../lib/types';
 
-export interface NextStepResult {
-  summary: string;
-  step: TaskStep;
-  templateId: string;
-  templateVersion: string;
-  aiTier: AiTier;
-  autofillSuggestions: string[]; // labels we can offer to fill from memory
-  matchedKnownProcess: boolean;
-}
+import type { NextStepResult } from '../lib/types';
 
 loadTemplates(allTemplates);
 

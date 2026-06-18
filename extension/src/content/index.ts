@@ -1,10 +1,11 @@
-// Content-script entry (LM-02).
+// Content-script entry (LM-02 + LM-12).
 // Runs in the page. Two jobs:
-//   1. On request from the worker, extract the page into a structured model.
-//   2. Refresh-persistence: remember ONLY origin+pathname so the panel can reopen
-//      where it was open (the v1 promise — no page text, no form values, no query).
+//   1. On request, run the orchestrator (extract + AI + task-graph) and return
+//      the single NextStepResult. This must run here because extraction and the
+//      on-device model live in the page context, not the panel's.
+//   2. Refresh-persistence: remember ONLY origin+pathname (the v1 promise).
 
-import { extractPage } from './extract';
+import { computeNextStep } from '../ui/orchestrator';
 import type { WorkerToContent, ContentToWorker } from '../lib/messages';
 
 const PERSIST_KEY = 'lifemode.openOn';
@@ -15,27 +16,29 @@ function send(msg: ContentToWorker): void {
 
 chrome.runtime.onMessage.addListener((raw: unknown, _sender, sendResponse) => {
   const msg = raw as WorkerToContent;
-  if (msg?.type === 'EXTRACT_PAGE') {
-    try {
-      const page = extractPage();
-      send({ type: 'PAGE_EXTRACTED', page });
-      sendResponse({ ok: true });
-    } catch (e) {
-      const reason = e instanceof Error ? e.message : 'unknown extract error';
-      send({ type: 'EXTRACT_FAILED', reason });
-      sendResponse({ ok: false });
-    }
+  if (msg?.type === 'COMPUTE_NEXT_STEP') {
+    void (async () => {
+      try {
+        const result = await computeNextStep();
+        send({ type: 'NEXT_STEP_RESULT', result });
+        sendResponse({ ok: true });
+      } catch (e) {
+        const reason = e instanceof Error ? e.message : 'unknown error';
+        send({ type: 'EXTRACT_FAILED', reason });
+        sendResponse({ ok: false });
+      }
+    })();
+    return true; // async sendResponse
   }
-  return true; // keep the message channel open for async sendResponse
+  return false;
 });
 
-// Refresh-persistence: store only where we are, nothing about what's on the page.
 function rememberLocation(): void {
   try {
     const where = `${location.origin}${location.pathname}`;
     void chrome.storage.local.set({ [PERSIST_KEY]: where });
   } catch {
-    /* storage may be unavailable in some sandboxes; non-fatal */
+    /* non-fatal */
   }
 }
 

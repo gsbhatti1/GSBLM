@@ -38,18 +38,39 @@ getStep.addEventListener('click', () => {
 chrome.runtime.onMessage.addListener((raw: unknown) => {
   const msg = raw as WorkerToPanel;
   if (msg?.type === 'NEXT_STEP_READY') {
-    const required = msg.page.fields.filter((f) => f.required).length;
+    const { step, summary, matchedKnownProcess, aiTier } = msg.result;
     stepCard.innerHTML = '';
+
+    const sum = document.createElement('p');
+    sum.className = 'step-body muted';
+    sum.style.marginTop = '0';
+    sum.textContent = summary;
+
     const title = document.createElement('p');
     title.className = 'step-title';
-    title.textContent = msg.page.title || 'This page';
+    title.textContent = step.title;
+
     const body = document.createElement('p');
     body.className = 'step-body';
-    body.textContent =
-      required > 0
-        ? `This page has ${required} thing${required === 1 ? '' : 's'} to fill in. Let's take the first one.`
-        : 'There is no form to fill here yet. Read the top of the page slowly.';
-    stepCard.append(title, body);
+    body.textContent = step.plainExplanation;
+
+    stepCard.append(sum, title, body);
+
+    if (step.whatYouNeed.length > 0) {
+      const need = document.createElement('p');
+      need.className = 'step-body muted';
+      need.textContent = `You'll need: ${step.whatYouNeed.join(', ')}`;
+      stepCard.append(need);
+    }
+
+    const tag = document.createElement('p');
+    tag.className = 'step-body muted';
+    tag.style.fontSize = '13px';
+    tag.style.marginTop = '12px';
+    tag.textContent = matchedKnownProcess
+      ? `Recognized process · helper: ${aiTier === 'on_device' ? 'on this device' : 'cloud'}`
+      : `General guidance · helper: ${aiTier === 'on_device' ? 'on this device' : 'cloud'}`;
+    stepCard.append(tag);
   } else if (msg?.type === 'NEXT_STEP_FAILED') {
     stepCard.innerHTML = `<p class="step-body muted">Could not read the page: ${msg.reason}</p>`;
   }
