@@ -5,7 +5,7 @@
 import { extractPage } from '../content/extract';
 import { summarizePage, localAvailable } from '../ai/router';
 import { loadTemplates, matchTemplate, nextStep, genericSteps } from '../taskgraph/engine';
-import { defaultTemplates } from '../taskgraph/templates.va';
+import { allTemplates } from '../taskgraph/index';
 import { loadMemory, matchMemoryToFields } from '../lib/memory';
 import { trackEvent } from '../lib/analytics';
 import type { TaskStep, AiTier } from '../lib/types';
@@ -20,7 +20,7 @@ export interface NextStepResult {
   matchedKnownProcess: boolean;
 }
 
-loadTemplates(defaultTemplates);
+loadTemplates(allTemplates);
 
 export async function computeNextStep(): Promise<NextStepResult> {
   const page = extractPage();
