@@ -6,9 +6,12 @@ import type { ExtractedPage, NextStepResult } from './types';
 
 export type PanelToWorker =
   | { type: 'REQUEST_NEXT_STEP' }
-  | { type: 'SET_ANALYTICS_CONSENT'; on: boolean };
+  | { type: 'SET_ANALYTICS_CONSENT'; on: boolean }
+  | { type: 'TOGGLE_FOCUS'; on: boolean };
 
-export type WorkerToContent = { type: 'COMPUTE_NEXT_STEP' };
+export type WorkerToContent =
+  | { type: 'COMPUTE_NEXT_STEP' }
+  | { type: 'SET_FOCUS'; on: boolean };
 
 export type ContentToWorker =
   | { type: 'NEXT_STEP_RESULT'; result: NextStepResult }

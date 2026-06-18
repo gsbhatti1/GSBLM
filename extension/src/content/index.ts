@@ -30,8 +30,28 @@ chrome.runtime.onMessage.addListener((raw: unknown, _sender, sendResponse) => {
     })();
     return true; // async sendResponse
   }
+  if (msg?.type === 'SET_FOCUS') {
+    setFocus(msg.on);
+    sendResponse({ ok: true });
+    return false;
+  }
   return false;
 });
+
+const FOCUS_ID = 'lifemode-focus-overlay';
+function setFocus(on: boolean): void {
+  const existing = document.getElementById(FOCUS_ID);
+  if (on) {
+    if (existing) return;
+    const overlay = document.createElement('div');
+    overlay.id = FOCUS_ID;
+    overlay.style.cssText =
+      'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2147483646;pointer-events:none';
+    document.documentElement.appendChild(overlay);
+  } else {
+    existing?.remove();
+  }
+}
 
 function rememberLocation(): void {
   try {

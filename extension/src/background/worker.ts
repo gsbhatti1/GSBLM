@@ -64,5 +64,20 @@ chrome.runtime.onMessage.addListener((raw: unknown, _sender, sendResponse) => {
     return true;
   }
 
+  if (msg?.type === 'TOGGLE_FOCUS') {
+    void (async () => {
+      const tabId = await activeTabId();
+      if (tabId !== undefined) {
+        try {
+          await chrome.tabs.sendMessage(tabId, { type: 'SET_FOCUS', on: msg.on });
+        } catch {
+          /* page not reachable; non-fatal */
+        }
+      }
+    })();
+    sendResponse({ ok: true });
+    return true;
+  }
+
   return false;
 });

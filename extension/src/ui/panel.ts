@@ -6,6 +6,7 @@ import type { PanelToWorker, WorkerToPanel } from '../lib/messages';
 import { loadMemory, upsertMemory, removeMemory } from '../lib/memory';
 import type { MemoryRecord, NextStepResult } from '../lib/types';
 import { contactsByKind, type HelpContact } from '../lib/help';
+import { makeReader } from '../lib/readaloud';
 
 const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.tab'));
 const panels: Record<string, HTMLElement> = {
@@ -229,4 +230,41 @@ explainBtn?.addEventListener('click', () => {
   // Always refresh so the explanation reflects the current page.
   const req: PanelToWorker = { type: 'REQUEST_NEXT_STEP' };
   void chrome.runtime.sendMessage(req);
+});
+
+// --- Read aloud + Focus mode (LM-14) ---
+const reader = makeReader();
+const readAloudBtn = document.getElementById('readAloud') as HTMLButtonElement | null;
+const focusBtn = document.getElementById('focusMode') as HTMLButtonElement | null;
+
+function currentStepText(): string {
+  if (!lastResult) return 'Tap start first step, and I will read this page for you.';
+  const s = lastResult.step;
+  const need = s.whatYouNeed.length ? ` You'll need: ${s.whatYouNeed.join(', ')}.` : '';
+  return `${s.title}. ${s.plainExplanation}${need}`;
+}
+
+readAloudBtn?.addEventListener('click', () => {
+  if (reader.isSpeaking()) {
+    reader.stop();
+    readAloudBtn.setAttribute('aria-pressed', 'false');
+    readAloudBtn.textContent = 'Read aloud';
+    return;
+  }
+  const started = reader.speak(currentStepText());
+  if (started) {
+    readAloudBtn.setAttribute('aria-pressed', 'true');
+    readAloudBtn.textContent = 'Stop';
+  } else {
+    readAloudBtn.textContent = 'Read aloud not available';
+  }
+});
+
+let focusOn = false;
+focusBtn?.addEventListener('click', () => {
+  focusOn = !focusOn;
+  const req: PanelToWorker = { type: 'TOGGLE_FOCUS', on: focusOn };
+  void chrome.runtime.sendMessage(req);
+  focusBtn.setAttribute('aria-pressed', String(focusOn));
+  focusBtn.textContent = focusOn ? 'Focus on' : 'Focus mode';
 });
