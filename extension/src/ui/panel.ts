@@ -42,6 +42,9 @@ chrome.runtime.onMessage.addListener((raw: unknown) => {
   const msg = raw as WorkerToPanel;
   if (msg?.type === 'NEXT_STEP_READY') {
     lastResult = msg.result;
+    if (explainOut && explainOut.textContent === 'Reading this page…') {
+      renderExplain(msg.result);
+    }
     const { step, summary, matchedKnownProcess, aiTier } = msg.result;
     stepCard.innerHTML = '';
 
@@ -197,4 +200,33 @@ shareTrusted?.addEventListener('click', () => {
     `Can you help me with this step when you have a moment?`;
   void navigator.clipboard?.writeText(note).catch(() => {});
   helpResults.innerHTML = `<p class="step-body" style="font-size:14px">Copied a short message you can paste to someone you trust:</p><p class="step-body muted" style="font-size:14px">${note}</p>`;
+});
+
+// --- Companion tab: Explain this page (LM-13) ---
+const explainBtn = document.getElementById('explainBtn') as HTMLButtonElement | null;
+const explainOut = document.getElementById('explainOut');
+
+function renderExplain(result: NextStepResult): void {
+  if (!explainOut) return;
+  const tier = result.aiTier === 'on_device' ? 'on this device' : 'cloud helper';
+  explainOut.innerHTML = '';
+  const sum = document.createElement('p');
+  sum.className = 'step-body';
+  sum.style.margin = '0 0 8px';
+  sum.textContent = result.summary;
+  const tag = document.createElement('p');
+  tag.className = 'step-body muted';
+  tag.style.cssText = 'font-size:13px;margin:0';
+  tag.textContent = `Explained ${tier}.`;
+  explainOut.append(sum, tag);
+}
+
+explainBtn?.addEventListener('click', () => {
+  if (explainOut) explainOut.textContent = 'Reading this page…';
+  if (lastResult) {
+    renderExplain(lastResult);
+  }
+  // Always refresh so the explanation reflects the current page.
+  const req: PanelToWorker = { type: 'REQUEST_NEXT_STEP' };
+  void chrome.runtime.sendMessage(req);
 });
