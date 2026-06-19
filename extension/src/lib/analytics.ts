@@ -8,8 +8,7 @@
 // rates, abandonment points, time-to-finish — the metrics they currently can't see.
 
 import type { AnalyticsEvent } from './types';
-
-const ENDPOINT = 'https://api.assetops.pro/lifemode/events';
+import { backendUrl } from './config';
 
 /** Salted, rotating, non-reversible per-install id. Rotates daily. */
 async function anonUserHash(): Promise<string> {
@@ -38,6 +37,8 @@ export async function trackEvent(
   e: Omit<AnalyticsEvent, 'anonUserHash' | 'ts'>,
 ): Promise<void> {
   if (!consented) return;
+  const url = backendUrl('/events');
+  if (!url) return; // backend not configured yet — stay local-first
   const event: AnalyticsEvent = {
     ...e,
     anonUserHash: await anonUserHash(),
@@ -45,7 +46,7 @@ export async function trackEvent(
   };
   // Fire-and-forget; never block the user's task on telemetry.
   try {
-    await fetch(ENDPOINT, {
+    await fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(event),

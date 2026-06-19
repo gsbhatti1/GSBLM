@@ -12,6 +12,7 @@
 // text (still useful) and only offer cloud as an explicit choice.
 
 import type { ExtractedPage, AiTier } from '../lib/types';
+import { backendUrl } from '../lib/config';
 
 // Chrome built-in AI global. Typings: npm i -D @types/dom-chromium-ai
 declare const LanguageModel: {
@@ -73,7 +74,9 @@ export async function askCloud(
   prompt: string,
   consentToken: string,
 ): Promise<AiResult> {
-  const res = await fetch('https://api.assetops.pro/lifemode/ai', {
+  const url = backendUrl('/ai');
+  if (!url) throw new Error('cloud AI not configured');
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-consent': consentToken },
     body: JSON.stringify({ prompt }),

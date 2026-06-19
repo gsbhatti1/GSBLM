@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LifeMode — Partner Dashboard</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 20px; color: #1f2421; }
+      h1 { font-size: 22px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin: 24px 0; }
+      .card { border: 1px solid #d9e0db; border-radius: 12px; padding: 20px; }
+      .label { color: #5f6b64; font-size: 13px; margin: 0; }
+      .value { font-size: 28px; font-weight: 600; margin: 6px 0 0; }
+      .muted { color: #5f6b64; font-size: 14px; }
+      input { font-size: 15px; padding: 8px; border: 1px solid #d9e0db; border-radius: 8px; width: 360px; max-width: 100%; }
+      button { font-size: 15px; padding: 8px 14px; border: 0; border-radius: 8px; background: #0f6e56; color: #fff; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <h1>LifeMode — Completion Dashboard</h1>
+    <p class="muted">Anonymous completion analytics. No page content or personal data is ever stored.</p>
+    <p>
+      <input id="base" placeholder="https://your-backend.vercel.app/api" />
+      <button id="load">Load</button>
+    </p>
+    <div class="grid" id="cards"></div>
+    <p class="muted" id="status"></p>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      $('load').addEventListener('click', async () => {
+        const base = $('base').value.trim().replace(/\/$/, '');
+        if (!base) return;
+        $('status').textContent = 'Loading…';
+        try {
+          const r = await fetch(`${base}/dashboard`);
+          const d = await r.json();
+          $('cards').innerHTML = `
+            <div class="card"><p class="label">Tasks started</p><p class="value">${d.totalStarted}</p></div>
+            <div class="card"><p class="label">Tasks completed</p><p class="value">${d.totalCompleted}</p></div>
+            <div class="card"><p class="label">Completion rate</p><p class="value">${d.completionRate}%</p></div>
+            <div class="card"><p class="label">Top drop-off step</p><p class="value" style="font-size:16px">${d.topAbandonmentStep ? d.topAbandonmentStep.step + ' (' + d.topAbandonmentStep.count + ')' : '—'}</p></div>`;
+          $('status').textContent = '';
+        } catch (e) {
+          $('status').textContent = 'Could not load. Check the backend URL.';
+        }
+      });
+    </script>
+  </body>
+</html>
