@@ -1,6 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GSB LifeMode",
+  "short_name": "LifeMode",
   "version": "2.0.0",
   "description": "One clear next step when the page feels too heavy.",
   "minimum_chrome_version": "138",
